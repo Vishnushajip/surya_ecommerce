@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "307657066428",
+    "project_id": "sunecommerce-1355b",
+    "storage_bucket": "sunecommerce-1355b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:307657066428:android:631ad7e4a3e2936bd48db9",
+        "android_client_info": {
+          "package_name": "com.example.surya_ecommerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWHEDhmEfa23s9lCizTMz8bXN5mJ3-Io0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

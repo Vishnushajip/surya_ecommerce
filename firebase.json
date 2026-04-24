@@ -1,0 +1,29 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "sunecommerce-1355b",
+          "appId": "1:307657066428:android:631ad7e4a3e2936bd48db9",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "sunecommerce-1355b",
+          "configurations": {
+            "android": "1:307657066428:android:631ad7e4a3e2936bd48db9",
+            "ios": "1:307657066428:ios:95c5340729f9579fd48db9",
+            "web": "1:307657066428:web:2e444d816bf7e907d48db9"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
