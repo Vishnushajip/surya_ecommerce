@@ -8,10 +8,11 @@ import '../theme/app_colors.dart';
 
 class UserUtils {
   static Timer? _heartbeatTimer;
+  static SharedPreferences? _prefs;
 
   static Future<void> checkAndPromptUser(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('user_name');
+    _prefs ??= await SharedPreferences.getInstance();
+    final name = _prefs!.getString('user_name');
 
     if (name == null || name.isEmpty) {
       if (context.mounted) {
@@ -24,34 +25,51 @@ class UserUtils {
   }
 
   static Future<void> _updateTrafficAndStats() async {
-    final prefs = await SharedPreferences.getInstance();
+    _prefs ??= await SharedPreferences.getInstance();
     final now = DateTime.now();
-    final dateKey = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final dateKey =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     final monthKey = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-    
-    final lastTraffic = prefs.getInt('last_traffic_time') ?? 0;
-    final lastDate = prefs.getString('last_counted_date') ?? "";
-    
+
+    final lastTraffic = _prefs!.getInt('last_traffic_time') ?? 0;
+    final lastDate = _prefs!.getString('last_counted_date') ?? "";
+
     final batch = FirebaseFirestore.instance.batch();
     bool needsCommit = false;
 
     if (now.millisecondsSinceEpoch - lastTraffic > 600000) {
-      final dailyRef = FirebaseFirestore.instance.collection('stats').doc('daily_$dateKey');
-      batch.set(dailyRef, {'traffic': FieldValue.increment(1)}, SetOptions(merge: true));
-      final monthlyRef = FirebaseFirestore.instance.collection('stats').doc('monthly_$monthKey');
-      batch.set(monthlyRef, {'traffic': FieldValue.increment(1)}, SetOptions(merge: true));
-      
-      await prefs.setInt('last_traffic_time', now.millisecondsSinceEpoch);
+      final dailyRef = FirebaseFirestore.instance
+          .collection('stats')
+          .doc('daily_$dateKey');
+      batch.set(dailyRef, {
+        'traffic': FieldValue.increment(1),
+      }, SetOptions(merge: true));
+      final monthlyRef = FirebaseFirestore.instance
+          .collection('stats')
+          .doc('monthly_$monthKey');
+      batch.set(monthlyRef, {
+        'traffic': FieldValue.increment(1),
+      }, SetOptions(merge: true));
+
+      await _prefs!.setInt('last_traffic_time', now.millisecondsSinceEpoch);
       needsCommit = true;
     }
 
     if (lastDate != dateKey) {
-      final dailyRef = FirebaseFirestore.instance.collection('stats').doc('daily_$dateKey');
-      batch.set(dailyRef, {'users': FieldValue.increment(1)}, SetOptions(merge: true));
-      final monthlyRef = FirebaseFirestore.instance.collection('stats').doc('monthly_$monthKey');
-      batch.set(monthlyRef, {'users': FieldValue.increment(1)}, SetOptions(merge: true));
-      
-      await prefs.setString('last_counted_date', dateKey);
+      final dailyRef = FirebaseFirestore.instance
+          .collection('stats')
+          .doc('daily_$dateKey');
+      batch.set(dailyRef, {
+        'users': FieldValue.increment(1),
+      }, SetOptions(merge: true));
+      final monthlyRef = FirebaseFirestore.instance
+          .collection('stats')
+          .doc('monthly_$monthKey');
+      batch.set(monthlyRef, {
+        'users': FieldValue.increment(1),
+      }, SetOptions(merge: true));
+
+      await _prefs!.setString('last_counted_date', dateKey);
       needsCommit = true;
     }
 
@@ -92,23 +110,15 @@ class UserUtils {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSoft),
-              ),
-              child: TextField(
-                controller: nameController,
-                style: GoogleFonts.outfit(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Enter your name',
-                  hintStyle: GoogleFonts.outfit(
-                    color: AppColors.softGrey.withOpacity(0.5),
-                  ),
-                  border: InputBorder.none,
+            TextField(
+              controller: nameController,
+              style: GoogleFonts.outfit(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Enter your name',
+                hintStyle: GoogleFonts.outfit(
+                  color: AppColors.softGrey.withOpacity(0.5),
                 ),
+                border: InputBorder.none,
               ),
             ),
           ],
@@ -166,7 +176,8 @@ class UserUtils {
 
   static Future<void> _registerNewUser(String name, int id) async {
     final now = DateTime.now();
-    final dateKey = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    final dateKey =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     final monthKey = "${now.year}-${now.month.toString().padLeft(2, '0')}";
 
     final prefs = await SharedPreferences.getInstance();
@@ -175,23 +186,29 @@ class UserUtils {
 
     final batch = FirebaseFirestore.instance.batch();
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(id.toString());
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(id.toString());
     batch.set(userRef, {
       'id': id,
       'name': name,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    final dailyRef = FirebaseFirestore.instance.collection('stats').doc('daily_$dateKey');
+    final dailyRef = FirebaseFirestore.instance
+        .collection('stats')
+        .doc('daily_$dateKey');
     batch.set(dailyRef, {
       'users': FieldValue.increment(1),
-      'traffic': FieldValue.increment(1)
+      'traffic': FieldValue.increment(1),
     }, SetOptions(merge: true));
 
-    final monthlyRef = FirebaseFirestore.instance.collection('stats').doc('monthly_$monthKey');
+    final monthlyRef = FirebaseFirestore.instance
+        .collection('stats')
+        .doc('monthly_$monthKey');
     batch.set(monthlyRef, {
       'users': FieldValue.increment(1),
-      'traffic': FieldValue.increment(1)
+      'traffic': FieldValue.increment(1),
     }, SetOptions(merge: true));
 
     await batch.commit();
@@ -208,12 +225,11 @@ class UserUtils {
 
   static Future<void> _updateLiveStatus() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final name = prefs.getString('user_name');
-      final id = prefs.getInt('user_id');
+      final name = _prefs?.getString('user_name');
+      final id = _prefs?.getInt('user_id');
 
       if (name != null && id != null) {
-        await FirebaseFirestore.instance
+        FirebaseFirestore.instance
             .collection('live_users')
             .doc(id.toString())
             .set({
@@ -222,9 +238,7 @@ class UserUtils {
               'lastSeen': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
       }
-    } catch (e) {
-      debugPrint('Heartbeat Error: $e');
-    }
+    } catch (e) {}
   }
 
   static void stopLiveHeartbeat() {
