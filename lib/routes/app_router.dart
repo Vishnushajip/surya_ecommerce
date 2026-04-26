@@ -256,7 +256,7 @@ class AppRouter {
           'description':
               'Learn about SUN Associates, your trusted electrical and hardware partner since 1995. Discover our commitment to quality and customer satisfaction.',
           'keywords':
-              'about sun associates, company history, electrical hardware mumbai',
+              'about SUN associates, company history, electrical hardware mumbai',
         };
       case 'products':
         return {
@@ -272,7 +272,7 @@ class AppRouter {
           'description':
               'Contact SUN Associates for all your electrical and hardware needs. Visit our store in Mumbai or call us for expert assistance.',
           'keywords':
-              'contact sun associates, electrical hardware mumbai contact, store address',
+              'contact SUN associates, electrical hardware mumbai contact, store address',
         };
       default:
         return {
@@ -354,7 +354,7 @@ class RouteConfig {
       description:
           'Learn about SUN Associates, your trusted electrical and hardware partner since 1995.',
       keywords:
-          'about sun associates, company history, electrical hardware mumbai',
+          'about SUN associates, company history, electrical hardware mumbai',
     ),
     '/products': RouteInfo(
       path: '/products',
@@ -371,7 +371,7 @@ class RouteConfig {
       title: 'Contact SUN Associates - Get in Touch',
       description:
           'Contact SUN ASSOCIATES for all your electrical and hardware needs.',
-      keywords: 'contact sun associates, electrical hardware mumbai contact',
+      keywords: 'contact SUN associates, electrical hardware mumbai contact',
     ),
   };
 }

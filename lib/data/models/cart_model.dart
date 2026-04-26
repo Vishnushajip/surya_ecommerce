@@ -13,7 +13,6 @@ class CartModel {
     required this.addedAt,
   });
 
-  // Factory constructor to create CartModel from JSON
   factory CartModel.fromJson(Map<String, dynamic> json) {
     return CartModel(
       id: json['id'] as String,
@@ -23,7 +22,6 @@ class CartModel {
     );
   }
 
-  // Method to convert CartModel to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -33,7 +31,6 @@ class CartModel {
     };
   }
 
-  // Create a copy with updated fields
   CartModel copyWith({
     String? id,
     ProductModel? product,
@@ -48,7 +45,6 @@ class CartModel {
     );
   }
 
-  // Getters for computed properties
   double get totalPrice => product.price * quantity;
   String get formattedTotalPrice => '₹${totalPrice.toStringAsFixed(2)}';
   String get formattedItemPrice => product.formattedPrice;
@@ -84,7 +80,6 @@ class CartSummary {
     required this.lastUpdated,
   });
 
-  // Factory constructor to create empty cart summary
   factory CartSummary.empty() {
     return CartSummary(
       items: [],
@@ -95,37 +90,36 @@ class CartSummary {
     );
   }
 
-  // Factory constructor to create CartSummary from list of cart items
   factory CartSummary.fromItems(List<CartModel> cartItems) {
-    final totalItems = cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
-    final subtotal = cartItems.fold<double>(0, (sum, item) => sum + item.totalPrice);
-    
+    final totalItems = cartItems.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
+    final subtotal = cartItems.fold<double>(
+      0,
+      (sum, item) => sum + item.totalPrice,
+    );
+
     return CartSummary(
       items: cartItems,
       totalItems: totalItems,
       subtotal: subtotal,
-      grandTotal: subtotal, // No tax or shipping in this case
+      grandTotal: subtotal,
       lastUpdated: DateTime.now(),
     );
   }
 
-  // Getters for computed properties
   bool get isEmpty => items.isEmpty;
   bool get isNotEmpty => items.isNotEmpty;
   String get formattedSubtotal => '₹${subtotal.toStringAsFixed(2)}';
   String get formattedGrandTotal => '₹${grandTotal.toStringAsFixed(2)}';
   int get uniqueItemCount => items.length;
-
-  // Check if all items are valid (in stock and active)
   bool get allItemsValid => items.every((item) => item.isValid);
 
-  // Get list of invalid items
-  List<CartModel> get invalidItems => items.where((item) => !item.isValid).toList();
-
-  // Get valid items only
-  List<CartModel> get validItems => items.where((item) => item.isValid).toList();
-
-  // Create a copy with updated fields
+  List<CartModel> get invalidItems =>
+      items.where((item) => !item.isValid).toList();
+  List<CartModel> get validItems =>
+      items.where((item) => item.isValid).toList();
   CartSummary copyWith({
     List<CartModel>? items,
     int? totalItems,
@@ -150,27 +144,22 @@ class CartSummary {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is CartSummary && 
-           other.totalItems == totalItems &&
-           other.grandTotal == grandTotal;
+    return other is CartSummary &&
+        other.totalItems == totalItems &&
+        other.grandTotal == grandTotal;
   }
 
   @override
   int get hashCode => Object.hash(totalItems, grandTotal);
 }
 
-// Extension for cart utility methods
 extension CartModelExtension on CartModel {
-  // Check if quantity is within allowed limits
   bool get isValidQuantity => quantity > 0 && quantity <= 99;
 
-  // Get quantity display text
   String get quantityDisplay => 'Qty: $quantity';
 
-  // Check if item is available for purchase
   bool get isAvailableForPurchase => product.isInStock && product.isActive;
 
-  // Get stock status message
   String get stockStatus {
     if (!product.isActive) return 'Product Unavailable';
     if (!product.isInStock) return 'Out of Stock';
@@ -179,7 +168,6 @@ extension CartModelExtension on CartModel {
 }
 
 extension CartSummaryExtension on CartSummary {
-  // Generate WhatsApp message for order
   String generateWhatsAppMessage({String customerName = 'Customer'}) {
     if (isEmpty) return '';
 
@@ -208,15 +196,14 @@ extension CartSummaryExtension on CartSummary {
     buffer.writeln('   💵 Grand Total: $formattedGrandTotal');
     buffer.writeln('');
     buffer.writeln('📞 *Contact Information:*');
-    buffer.writeln('   📱 Phone: +91 98765 43210');
-    buffer.writeln('   📧 Email: info@sunassociates.com');
+    buffer.writeln('   📱 Phone: +91 98462 03815');
+    buffer.writeln('   📧 Email: suryadigitalconnect@gmail.com');
     buffer.writeln('');
     buffer.writeln('Thank you for your order! 🎉');
 
     return buffer.toString();
   }
 
-  // Generate order summary text for display
   String generateOrderSummary({String customerName = 'Customer'}) {
     if (isEmpty) return 'No items in cart';
 
@@ -232,7 +219,9 @@ extension CartSummaryExtension on CartSummary {
     for (int i = 0; i < items.length; i++) {
       final item = items[i];
       buffer.writeln('${i + 1}. ${item.product.productName}');
-      buffer.writeln('   ${item.product.productCategory} | ${item.quantity} x ${item.formattedItemPrice} = ${item.formattedTotalPrice}');
+      buffer.writeln(
+        '   ${item.product.productCategory} | ${item.quantity} x ${item.formattedItemPrice} = ${item.formattedTotalPrice}',
+      );
     }
 
     buffer.writeln('─' * 50);
@@ -244,13 +233,8 @@ extension CartSummaryExtension on CartSummary {
     return buffer.toString();
   }
 
-  // Check if cart has any out-of-stock items
   bool get hasOutOfStockItems => items.any((item) => !item.product.isInStock);
-
-  // Check if cart has any inactive items
   bool get hasInactiveItems => items.any((item) => !item.product.isActive);
-
-  // Get items that need attention
-  List<CartModel> get itemsNeedingAttention => 
+  List<CartModel> get itemsNeedingAttention =>
       items.where((item) => !item.isValid).toList();
 }

@@ -7,7 +7,7 @@ class AppConstants {
   static const String companyName = 'SUN Associates';
   static const String companyAddress = 'ATHOLI, ATHANI, PIN 673315, KOZHIKODE';
   static const String companyPhone = '+91 9846 203 813';
-  static const String companyEmail = 'sunassociatesatholi@gmail.com';
+  static const String companyEmail = 'suryadigitalconnect@gmail.com';
 
   // WhatsApp Configuration
   static const String whatsappNumber = '919846203813';

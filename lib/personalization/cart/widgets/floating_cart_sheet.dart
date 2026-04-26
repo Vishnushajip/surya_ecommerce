@@ -5,7 +5,6 @@ import '../../../core/theme/app_colors.dart';
 import '../view_model/cart_view_model.dart';
 import '../../../routes/app_router.dart';
 
-// Local provider to handle the visibility state of the floating bar
 final isCartHiddenProvider = StateProvider<bool>((ref) => false);
 
 class FloatingCartSheet extends ConsumerWidget {
@@ -15,11 +14,6 @@ class FloatingCartSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cartAsync = ref.watch(cartViewModelProvider);
     final isHidden = ref.watch(isCartHiddenProvider);
-    final currentPath = ModalRoute.of(context)?.settings.name;
-
-    if (currentPath == '/cart' || currentPath == '/checkout') {
-      return const SizedBox.shrink();
-    }
 
     return cartAsync.when(
       data: (summary) {

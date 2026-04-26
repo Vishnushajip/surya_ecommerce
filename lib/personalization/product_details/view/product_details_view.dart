@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:surya_ecommerce/personalization/home/widgets/home_footer_section.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/responsive/responsive_helper.dart';
 import '../../../core/widgets/cached_network_image_widget.dart';
 import '../../../data/models/product_model.dart';
 import '../view_model/product_details_view_model.dart';
 import '../../cart/view_model/cart_view_model.dart';
+import '../../cart/widgets/floating_cart_sheet.dart';
+import '../../reviews/widgets/review_list_widget.dart';
+import '../../../routes/app_router.dart';
 
 class ProductDetailsView extends ConsumerStatefulWidget {
   final String productId;
@@ -49,10 +51,37 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
   }
 
   void _addToCart(ProductModel product) async {
-    await ref
-        .read(cartViewModelProvider.notifier)
-        .addToCart(product, quantity: 1);
-    if (mounted) {}
+    try {
+      await ref
+          .read(cartViewModelProvider.notifier)
+          .addToCart(product, quantity: 1);
+
+      ref.read(isCartHiddenProvider.notifier).state = false;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${product.productName} added to cart'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: 'VIEW CART',
+              textColor: Colors.white,
+              onPressed: () => AppRouter.goCart(context),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add to cart: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -60,6 +89,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
     final productAsync = ref.watch(
       productDetailsViewModelProvider(widget.productId),
     );
+    final cartAsync = ref.watch(cartViewModelProvider);
     final isDesktop = ResponsiveHelper.isDesktop(context);
 
     return Scaffold(
@@ -93,6 +123,12 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
             return const Center(child: Text('Product not found'));
           }
 
+          final isInCart =
+              cartAsync.value?.items.any(
+                (item) => item.product.id == product.id,
+              ) ??
+              false;
+
           return FadeTransition(
             opacity: _fadeAnimation,
             child: SingleChildScrollView(
@@ -103,8 +139,8 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
                 vertical: 20,
               ),
               child: isDesktop
-                  ? _buildDesktopLayout(product)
-                  : _buildMobileLayout(product),
+                  ? _buildDesktopLayout(product, isInCart)
+                  : _buildMobileLayout(product, isInCart),
             ),
           );
         },
@@ -112,24 +148,35 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
     );
   }
 
-  Widget _buildDesktopLayout(ProductModel product) {
+  Widget _buildDesktopLayout(ProductModel product, bool isInCart) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(flex: 5, child: _buildGallerySection(product)),
         const SizedBox(width: 40),
-        Expanded(flex: 4, child: _buildInfoSection(product)),
+        Expanded(
+          flex: 4,
+          child: Column(
+            children: [
+              _buildInfoSection(product, isInCart),
+              const SizedBox(height: 50),
+              ReviewListWidget(productId: product.id),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildMobileLayout(ProductModel product) {
+  Widget _buildMobileLayout(ProductModel product, bool isInCart) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildGallerySection(product),
         const SizedBox(height: 30),
-        _buildInfoSection(product),
+        _buildInfoSection(product, isInCart),
+        const SizedBox(height: 50),
+        ReviewListWidget(productId: product.id),
       ],
     );
   }
@@ -192,7 +239,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
     );
   }
 
-  Widget _buildInfoSection(ProductModel product) {
+  Widget _buildInfoSection(ProductModel product, bool isInCart) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -204,7 +251,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
             border: Border.all(color: AppColors.accentGold.withOpacity(0.3)),
           ),
           child: Text(
-           product.productCategory,
+            product.productCategory,
             style: GoogleFonts.outfit(
               color: AppColors.accentGold,
               fontSize: 12,
@@ -273,10 +320,19 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
           width: double.infinity,
           height: 55,
           child: ElevatedButton.icon(
-            onPressed: () => _addToCart(product),
-            icon: const Icon(Icons.shopping_bag, color: AppColors.primaryDark),
+            onPressed: () {
+              if (isInCart) {
+                AppRouter.goCart(context);
+              } else {
+                _addToCart(product);
+              }
+            },
+            icon: Icon(
+              isInCart ? Icons.arrow_forward : Icons.shopping_bag,
+              color: AppColors.primaryDark,
+            ),
             label: Text(
-              "ADD TO CART",
+              isInCart ? "GO TO CART" : "ADD TO CART",
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.bold,
                 color: AppColors.primaryDark,
@@ -291,7 +347,6 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
           ),
         ),
         const SizedBox(height: 12),
-        SunAssociatesFooter(),
       ],
     );
   }

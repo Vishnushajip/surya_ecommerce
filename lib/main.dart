@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:universal_html/html.dart' as html;
+import 'package:web/web.dart' as web;
 import 'core/theme/app_colors.dart';
 import 'core/services/firebase_service.dart';
 import 'core/constants/app_constants.dart';
-import 'core/widgets/splash_gate.dart';
+
 import 'data/repositories/cart_repository.dart';
 import 'data/repositories/product_repository.dart';
 import 'data/repositories/review_repository.dart';
@@ -113,14 +113,14 @@ class MyApp extends ConsumerWidget {
       builder: (context, child) {
         if (kIsWeb) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            html.window.dispatchEvent(html.Event('flutter-first-frame'));
+            web.window.dispatchEvent(web.Event('flutter-first-frame'));
           });
         }
         return MediaQuery(
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: TextScaler.linear(1.0)),
-          child: SplashGate(child: child!),
+          child: child!,
         );
       },
     );

@@ -10,7 +10,6 @@ class ReviewRepository {
   ReviewRepository(FirebaseService firebaseService)
     : _firestore = firebaseService.firestore;
 
-  // Add a review
   Future<void> addReview(ReviewModel review) async {
     try {
       await _firestore
@@ -18,14 +17,12 @@ class ReviewRepository {
           .doc(review.feedbackId)
           .set(review.toFirestore());
 
-      // Update product rating
       await _updateProductRating(review.productId);
     } catch (e) {
       throw Exception('Failed to add review: $e');
     }
   }
 
-  // Get reviews for a product
   Future<List<ReviewModel>> getReviewsForProduct(
     String productId, {
     int limit = 20,
@@ -35,7 +32,6 @@ class ReviewRepository {
       Query query = _firestore
           .collection(AppConstants.feedbackCollection)
           .where('productId', isEqualTo: productId)
-          .orderBy('createdAt', descending: true)
           .limit(limit);
 
       if (startAfter != null) {
@@ -43,15 +39,18 @@ class ReviewRepository {
       }
 
       final querySnapshot = await query.get();
-      return querySnapshot.docs
+      final reviews = querySnapshot.docs
           .map((doc) => ReviewModel.fromFirestore(doc))
           .toList();
+      
+      // Sort client-side
+      reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return reviews;
     } catch (e) {
       throw Exception('Failed to get reviews: $e');
     }
   }
 
-  // Get review summary for a product
   Future<ReviewSummary> getReviewSummary(String productId) async {
     try {
       final querySnapshot = await _firestore
@@ -69,7 +68,6 @@ class ReviewRepository {
     }
   }
 
-  // Get reviews by customer
   Future<List<ReviewModel>> getReviewsByCustomer(
     String customerEmail, {
     int limit = 50,
@@ -90,7 +88,6 @@ class ReviewRepository {
     }
   }
 
-  // Check if customer has reviewed a product
   Future<bool> hasCustomerReviewedProduct(
     String productId,
     String customerEmail,
@@ -109,7 +106,6 @@ class ReviewRepository {
     }
   }
 
-  // Update a review
   Future<void> updateReview(ReviewModel review) async {
     try {
       await _firestore
@@ -117,14 +113,12 @@ class ReviewRepository {
           .doc(review.feedbackId)
           .update(review.toFirestore());
 
-      // Update product rating
       await _updateProductRating(review.productId);
     } catch (e) {
       throw Exception('Failed to update review: $e');
     }
   }
 
-  // Delete a review
   Future<void> deleteReview(String feedbackId, String productId) async {
     try {
       await _firestore
@@ -132,14 +126,12 @@ class ReviewRepository {
           .doc(feedbackId)
           .delete();
 
-      // Update product rating
       await _updateProductRating(productId);
     } catch (e) {
       throw Exception('Failed to delete review: $e');
     }
   }
 
-  // Get recent reviews across all products
   Future<List<ReviewModel>> getRecentReviews({int limit = 10}) async {
     try {
       final querySnapshot = await _firestore
@@ -233,25 +225,26 @@ class ReviewRepository {
     }
   }
 
-  // Stream for real-time review updates
   Stream<List<ReviewModel>> streamReviewsForProduct(
     String productId, {
-    int limit = 20,
+    int limit = 100,
   }) {
     return _firestore
         .collection(AppConstants.feedbackCollection)
         .where('productId', isEqualTo: productId)
-        .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
+          (snapshot) {
+            final reviews = snapshot.docs
               .map((doc) => ReviewModel.fromFirestore(doc))
-              .toList(),
+              .toList();
+            reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            return reviews;
+          },
         );
   }
 
-  // Stream for review summary
   Stream<ReviewSummary> streamReviewSummary(String productId) {
     return _firestore
         .collection(AppConstants.feedbackCollection)

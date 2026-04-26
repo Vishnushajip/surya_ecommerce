@@ -133,7 +133,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
     buffer.writeln('GRAND TOTAL: ${cartSummary.formattedGrandTotal}');
     buffer.writeln('--------------------');
     buffer.writeln('');
-    buffer.writeln('Please confirm my order. Thank you!');
+    buffer.writeln('Please Confirm My order. Thank you!');
 
     return buffer.toString();
   }

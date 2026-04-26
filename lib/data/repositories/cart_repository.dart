@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cart_model.dart';
 import '../models/product_model.dart';
@@ -20,7 +21,7 @@ class CartRepository {
       if (timestampString != null) {
         final lastUpdated = DateTime.parse(timestampString);
         final difference = DateTime.now().difference(lastUpdated);
-        if (difference.inHours >= 24) {
+        if (difference.inHours >= AppConstants.cartPersistenceDuration.inHours) {
           await clearCart();
           return [];
         }
@@ -34,11 +35,11 @@ class CartRepository {
           .map((item) => CartModel.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      return []; // Return empty instead of throwing to avoid crashes
+      debugPrint('🔥 CART REPOSITORY ERROR: $e');
+      return []; 
     }
   }
 
-  // Save cart items
   Future<void> saveCartItems(List<CartModel> items) async {
     try {
       final cartJson = jsonEncode(items.map((item) => item.toJson()).toList());
@@ -53,18 +54,15 @@ class CartRepository {
     }
   }
 
-  // Add item to cart
   Future<void> addToCart(ProductModel product, {int quantity = 1}) async {
     try {
       final cartItems = await getCartItems();
 
-      // Check if item already exists
       final existingItemIndex = cartItems.indexWhere(
         (item) => item.product.id == product.id,
       );
 
       if (existingItemIndex != -1) {
-        // Update existing item quantity
         final existingItem = cartItems[existingItemIndex];
         final newQuantity = existingItem.quantity + quantity;
 
@@ -76,7 +74,6 @@ class CartRepository {
           quantity: newQuantity,
         );
       } else {
-        // Add new item
         final cartItem = CartModel(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           product: product,

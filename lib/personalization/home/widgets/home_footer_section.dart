@@ -225,7 +225,7 @@ class _ContactColumn extends StatelessWidget {
         const SizedBox(height: 16),
         _ContactRow(
           icon: FontAwesomeIcons.envelope,
-          text: 'sunassociatesatholi@gmail.com',
+          text: 'suryadigitalconnect@gmail.com',
         ),
       ],
     );

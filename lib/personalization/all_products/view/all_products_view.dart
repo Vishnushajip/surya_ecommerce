@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
+import 'package:surya_ecommerce/routes/app_router.dart';
 
 final firestoreProvider = Provider((ref) => FirebaseFirestore.instance);
 
@@ -359,69 +360,73 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderSoft),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: product.imageUrls.isNotEmpty
-                  ? Image.network(
-                      product.imageUrls.first,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    )
-                  : const Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: AppColors.softGrey,
+    return InkWell(
+      onTap: () => AppRouter.goProductDetails(context, product.id),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderSoft),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                child: product.imageUrls.isNotEmpty
+                    ? Image.network(
+                        product.imageUrls.first,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      )
+                    : const Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: AppColors.softGrey,
+                        ),
                       ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.productName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.nunito(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    product.productCategory,
+                    style: GoogleFonts.nunito(
+                      color: AppColors.softGrey,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '₹${product.price}',
+                    style: GoogleFonts.nunito(
+                      color: AppColors.accentGold,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.productName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.nunito(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  product.productCategory,
-                  style: GoogleFonts.nunito(
-                    color: AppColors.softGrey,
-                    fontSize: 10,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '₹${product.price}',
-                  style: GoogleFonts.nunito(
-                    color: AppColors.accentGold,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

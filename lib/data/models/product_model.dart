@@ -66,21 +66,23 @@ class ProductModel {
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id'] as String,
-      productName: json['productName'] as String,
-      productCategory: json['categoryName'] as String,
-      description: json['description'] as String,
-      price: (json['price'] as num).toDouble(),
-      imageUrls: List<String>.from(json['imageUrls'] as List),
-      quantity: json['quantity'] as int,
-      createdDate: Timestamp.fromDate(
-        DateTime.parse(json['createdDate'] as String),
-      ),
-      listedDate: Timestamp.fromDate(
-        DateTime.parse(json['listedDate'] as String),
-      ),
-      ratingAverage: (json['ratingAverage'] as num).toDouble(),
-      ratingCount: json['ratingCount'] as int,
+      id: (json['id'] as String?) ?? '',
+      productName: (json['productName'] as String?) ?? '',
+      productCategory: (json['categoryName'] as String?) ?? '',
+      description: (json['description'] as String?) ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      imageUrls: json['imageUrls'] != null
+          ? List<String>.from(json['imageUrls'] as List)
+          : [],
+      quantity: (json['quantity'] as int?) ?? 0,
+      createdDate: json['createdDate'] != null
+          ? Timestamp.fromDate(DateTime.parse(json['createdDate'] as String))
+          : Timestamp.now(),
+      listedDate: json['listedDate'] != null
+          ? Timestamp.fromDate(DateTime.parse(json['listedDate'] as String))
+          : Timestamp.now(),
+      ratingAverage: (json['ratingAverage'] as num?)?.toDouble() ?? 0.0,
+      ratingCount: (json['ratingCount'] as int?) ?? 0,
       manufacturingDate: json['manufacturingDate'] != null
           ? Timestamp.fromDate(
               DateTime.parse(json['manufacturingDate'] as String),
@@ -89,8 +91,8 @@ class ProductModel {
       expiryDate: json['expiryDate'] != null
           ? Timestamp.fromDate(DateTime.parse(json['expiryDate'] as String))
           : null,
-      featured: json['featured'] as bool,
-      isActive: json['isActive'] as bool,
+      featured: (json['featured'] as bool?) ?? false,
+      isActive: (json['isActive'] as bool?) ?? true,
     );
   }
 
@@ -164,7 +166,7 @@ class ProductModel {
     return {
       'id': id,
       'productName': productName,
-      'productCategory': productCategory,
+      'categoryName': productCategory,
       'description': description,
       'price': price,
       'imageUrls': imageUrls,
