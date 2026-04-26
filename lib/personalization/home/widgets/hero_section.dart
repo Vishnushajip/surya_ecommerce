@@ -15,7 +15,7 @@ class HomeHeroSection extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      height: isMobile ? 380 : 480,
+      height: isMobile ? 420 : 540,
       child: Stack(
         children: [
           SizedBox(
@@ -43,9 +43,11 @@ class HomeHeroSection extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isMobile ? 24 : 64,
-              vertical: isMobile ? 32 : 48,
+            padding: EdgeInsets.only(
+              left: isMobile ? 24 : 64,
+              right: isMobile ? 24 : 64,
+              top: isMobile ? 100 : 140,
+              bottom: isMobile ? 32 : 48,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

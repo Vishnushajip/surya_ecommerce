@@ -47,6 +47,7 @@ class _HomeViewState extends ConsumerState<HomeView>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
+      extendBodyBehindAppBar: true,
       appBar: const CustomAppBar(title: AppConstants.companyName),
       body: SingleChildScrollView(
         physics: kIsWeb

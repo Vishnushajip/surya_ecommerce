@@ -36,52 +36,95 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ResponsiveHelper.isTablet(context);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cardDark,
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderSoft, width: 0.5),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryDark,
+            AppColors.primaryDark.withOpacity(0.5),
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.6, 1.0],
         ),
       ),
-      child: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        toolbarHeight: _toolbarHeight,
-        titleSpacing: 0,
-        title: _Logo(compact: !isWide),
-        leading: showBackButton
-            ? _IconBtn(
-                icon: Icons.arrow_back_ios_new_rounded,
-                onTap: onBackPressed ?? () => Navigator.of(context).pop(),
-              )
-            : _IconBtn(
-                iconWidget: Image.network(
-                  'https://cdn-icons-png.flaticon.com/128/3801/3801845.png',
-                  width: 18,
-                  height: 18,
-                  color: AppColors.textWhite,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: _toolbarHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                // ── Leading: back or logo ──
+                if (showBackButton)
+                  _AppBarIconButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: onBackPressed ?? () => Navigator.of(context).pop(),
+                  )
+                else
+                  _AppBarIconButton(
+                    iconWidget: Image.network(
+                      'assets/images/logo_bg_removed.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    ),
+                    onTap: () => _NavBottomSheet.show(context),
+                  ),
+
+                const SizedBox(width: 6),
+
+                // ── Brand title ──
+                Expanded(
+                  child: Text(
+                    'SUN ASSOCIATES',
+                    style: GoogleFonts.bebasNeue(
+                      color: AppColors.accentGold,
+                      fontSize: isWide ? 26 : 21,
+                      letterSpacing: 1.8,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                onTap: () => _NavBottomSheet.show(context),
-              ),
-        actions: [
-          if (isWide) ...[
-            _NavMenuButton(context: context),
-            _VerticalDivider(),
-            if (showSearch) _SearchPill(context: context),
-          ] else if (showSearch)
-            _IconBtn(
-              iconWidget: Image.network(
-                'https://cdn-icons-png.flaticon.com/128/751/751463.png',
-                width: 18,
-                height: 18,
-                color: AppColors.textWhite,
-              ),
-              onTap: () => context.go('/products'),
+
+                // ── Search icon ──
+                if (showSearch) ...[
+                  _AppBarIconButton(
+                    iconWidget: Image.network(
+                      'https://cdn-icons-png.flaticon.com/128/751/751463.png',
+                      width: 20,
+                      height: 20,
+                      color: AppColors.textWhite,
+                    ),
+                    onTap: () => context.go('/products'),
+                  ),
+                  _AppBarDivider(),
+                ],
+
+                // ── Menu icon ──
+                _AppBarIconButton(
+                  iconWidget: const Icon(
+                    Icons.grid_view_rounded,
+                    size: 20,
+                    color: AppColors.accentGold,
+                  ),
+                  onTap: () => _NavBottomSheet.show(context),
+                ),
+
+                _AppBarDivider(),
+
+                // ── Cart icon ──
+                _CartButton(itemCount: cartItemCount, context: context),
+
+                if (actions != null) ...actions!,
+
+                const SizedBox(width: 4),
+              ],
             ),
-          _CartButton(itemCount: cartItemCount, context: context),
-          if (actions != null) ...actions!,
-          const SizedBox(width: 8),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -90,95 +133,50 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(_toolbarHeight);
 }
 
-class _Logo extends StatelessWidget {
-  final bool compact;
-  const _Logo({required this.compact});
+// ─────────────────────────── Atoms ───────────────────────────
 
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      "SUN ASSOCIATES",
-      style: GoogleFonts.bebasNeue(
-        color: AppColors.accentGold,
-        fontSize: compact ? 22 : 28,
-        letterSpacing: 1.2,
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-}
-
-class _IconBtn extends StatelessWidget {
+class _AppBarIconButton extends StatelessWidget {
   final IconData? icon;
   final Widget? iconWidget;
   final VoidCallback onTap;
 
-  const _IconBtn({this.icon, this.iconWidget, required this.onTap});
+  const _AppBarIconButton({this.icon, this.iconWidget, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: iconWidget ?? Icon(icon, color: AppColors.textWhite, size: 20),
-      onPressed: onTap,
-      splashRadius: 20,
-      padding: const EdgeInsets.all(8),
-      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-    );
-  }
-}
-
-class _VerticalDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 22,
-      color: AppColors.borderSoft,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-    );
-  }
-}
-
-class _SearchPill extends StatelessWidget {
-  final BuildContext context;
-  const _SearchPill({required this.context});
-
-  @override
-  Widget build(BuildContext ctx) {
-    return GestureDetector(
-      onTap: () => ctx.go('/products'),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: AppColors.primaryDark.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.borderSoft),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.network(
-              'https://cdn-icons-png.flaticon.com/128/751/751463.png',
-              width: 14,
-              height: 14,
-              color: AppColors.softGrey,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Search',
-              style: GoogleFonts.dmSans(
-                color: AppColors.softGrey,
-                fontSize: 13,
-              ),
-            ),
-          ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        splashColor: AppColors.accentGold.withOpacity(0.12),
+        highlightColor: AppColors.accentGold.withOpacity(0.06),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child:
+                iconWidget ?? Icon(icon, color: AppColors.textWhite, size: 20),
+          ),
         ),
       ),
     );
   }
 }
+
+class _AppBarDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 20,
+      color: AppColors.borderSoft,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+    );
+  }
+}
+
+// ─────────────────────────── Cart ───────────────────────────
 
 class _CartButton extends StatelessWidget {
   final int itemCount;
@@ -190,37 +188,38 @@ class _CartButton extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        IconButton(
-          icon: Image.network(
+        _AppBarIconButton(
+          iconWidget: Image.network(
             'https://cdn-icons-png.flaticon.com/128/5337/5337564.png',
             width: 22,
             height: 22,
             color: AppColors.textWhite,
           ),
-          onPressed: () => AppRouter.goCart(ctx),
-          tooltip: 'Cart',
-          splashRadius: 20,
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          onTap: () => AppRouter.goCart(ctx),
         ),
         if (itemCount > 0)
           Positioned(
             right: 4,
             top: 4,
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: AppColors.accentGold,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                itemCount > 99 ? '99+' : '$itemCount',
-                style: GoogleFonts.dmSans(
-                  color: AppColors.primaryDark,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
+            child: IgnorePointer(
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.primaryDark, width: 1.5),
                 ),
-                textAlign: TextAlign.center,
+                child: Text(
+                  itemCount > 99 ? '99+' : '$itemCount',
+                  style: GoogleFonts.dmSans(
+                    color: AppColors.primaryDark,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ),
@@ -229,30 +228,7 @@ class _CartButton extends StatelessWidget {
   }
 }
 
-class _NavMenuButton extends StatelessWidget {
-  final BuildContext context;
-  const _NavMenuButton({required this.context});
-
-  @override
-  Widget build(BuildContext ctx) {
-    return TextButton.icon(
-      onPressed: () => _NavBottomSheet.show(ctx),
-      icon: const Icon(
-        Icons.grid_view_rounded,
-        size: 15,
-        color: AppColors.accentGold,
-      ),
-      label: Text(
-        'Menu',
-        style: GoogleFonts.syne(
-          color: AppColors.accentGold,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
+// ─────────────────────────── Nav Bottom Sheet ───────────────────────────
 
 class _NavBottomSheet extends StatelessWidget {
   final BuildContext context;
@@ -263,6 +239,7 @@ class _NavBottomSheet extends StatelessWidget {
       context: ctx,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      enableDrag: true,
       builder: (_) => _NavBottomSheet(context: ctx),
     );
   }
@@ -279,10 +256,12 @@ class _NavBottomSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.cardDark,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(top: BorderSide(color: AppColors.borderSoft)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border(
+          top: BorderSide(color: AppColors.borderSoft, width: 0.5),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,17 +276,20 @@ class _NavBottomSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'NAVIGATION',
-            style: GoogleFonts.syne(
-              color: AppColors.softGrey,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2,
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              'NAVIGATION',
+              style: GoogleFonts.syne(
+                color: AppColors.softGrey,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           ..._navItems.map(
             (item) => _NavTile(
               icon: item.icon,
@@ -337,38 +319,45 @@ class _NavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.primaryDark,
-                borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        splashColor: AppColors.accentGold.withOpacity(0.08),
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryDark,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.borderSoft, width: 0.5),
+                ),
+                child: Icon(icon, color: AppColors.accentGold, size: 17),
               ),
-              child: Icon(icon, color: AppColors.accentGold, size: 17),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              label,
-              style: GoogleFonts.dmSans(
-                color: AppColors.textWhite,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.dmSans(
+                    color: AppColors.textWhite,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
-            const Spacer(),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: AppColors.borderSoft,
-              size: 13,
-            ),
-          ],
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: AppColors.borderSoft,
+                size: 13,
+              ),
+            ],
+          ),
         ),
       ),
     );

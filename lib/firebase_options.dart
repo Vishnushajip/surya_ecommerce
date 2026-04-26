@@ -47,29 +47,29 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDpPSqEAzemOEbQTQmWDMkQDaXak2Smdk8',
-    appId: '1:307657066428:web:2e444d816bf7e907d48db9',
-    messagingSenderId: '307657066428',
-    projectId: 'sunecommerce-1355b',
-    authDomain: 'sunecommerce-1355b.firebaseapp.com',
-    storageBucket: 'sunecommerce-1355b.firebasestorage.app',
-    measurementId: 'G-CH5CRMMFVJ',
+    apiKey: 'AIzaSyAnP4fvtQTDnjo0RsKOr54yiOJv0VFsPiQ',
+    appId: '1:600497347289:web:9ac8d7dfbd0d0c6d867cc8',
+    messagingSenderId: '600497347289',
+    projectId: 'sunassociates-e01eb',
+    authDomain: 'sunassociates-e01eb.firebaseapp.com',
+    storageBucket: 'sunassociates-e01eb.firebasestorage.app',
+    measurementId: 'G-4TB8NV236Y',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBWHEDhmEfa23s9lCizTMz8bXN5mJ3-Io0',
-    appId: '1:307657066428:android:631ad7e4a3e2936bd48db9',
-    messagingSenderId: '307657066428',
-    projectId: 'sunecommerce-1355b',
-    storageBucket: 'sunecommerce-1355b.firebasestorage.app',
+    apiKey: 'AIzaSyCj8lPyVO2PxHQ03mhjIz8feLhSclhe-wk',
+    appId: '1:600497347289:android:f770abe20fca402f867cc8',
+    messagingSenderId: '600497347289',
+    projectId: 'sunassociates-e01eb',
+    storageBucket: 'sunassociates-e01eb.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyC2IAQOtAFdd58xw0atnrNs7UQmSeKH9_Q',
-    appId: '1:307657066428:ios:95c5340729f9579fd48db9',
-    messagingSenderId: '307657066428',
-    projectId: 'sunecommerce-1355b',
-    storageBucket: 'sunecommerce-1355b.firebasestorage.app',
+    apiKey: 'AIzaSyDvJx1Ai99nwglCMIVpEM_zaXwIktcwtvo',
+    appId: '1:600497347289:ios:28048024fa69e1bd867cc8',
+    messagingSenderId: '600497347289',
+    projectId: 'sunassociates-e01eb',
+    storageBucket: 'sunassociates-e01eb.firebasestorage.app',
     iosBundleId: 'com.example.suryaEcommerce',
   );
 }

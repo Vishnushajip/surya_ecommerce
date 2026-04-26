@@ -16,14 +16,14 @@ class AppConstants {
 
   // Firebase Configuration
   static const String firebaseApiKey =
-      'AIzaSyDpPSqEAzemOEbQTQmWDMkQDaXak2Smdk8';
-  static const String firebaseAuthDomain = 'sunecommerce-1355b.firebaseapp.com';
-  static const String firebaseProjectId = 'sunecommerce-1355b';
-  static const String firebaseStorageBucket = 'sunecommerce-1355b.firebasestorage.app';
-  static const String firebaseMessagingSenderId = '307657066428';
+      'AIzaSyAnP4fvtQTDnjo0RsKOr54yiOJv0VFsPiQ';
+  static const String firebaseAuthDomain = 'sunassociates-e01eb.firebaseapp.com';
+  static const String firebaseProjectId = 'sunassociates-e01eb';
+  static const String firebaseStorageBucket = 'sunassociates-e01eb.firebasestorage.app';
+  static const String firebaseMessagingSenderId = '600497347289';
   static const String firebaseAppId =
-      '1:763321790203:web:bd62c6a213288576240a5e';
-  static const String firebaseMeasurementId = 'G-PSN9RD540N';
+      '1:600497347289:web:9ac8d7dfbd0d0c6d867cc8';
+  static const String firebaseMeasurementId = 'G-4TB8NV236Y';
 
   // Collections
   static const String productsCollection = 'products';
