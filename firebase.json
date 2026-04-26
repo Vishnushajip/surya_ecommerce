@@ -1,25 +1,4 @@
 {
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "sunassociates-e01eb",
-          "appId": "1:600497347289:android:f770abe20fca402f867cc8",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "sunassociates-e01eb",
-          "configurations": {
-            "android": "1:600497347289:android:f770abe20fca402f867cc8",
-            "ios": "1:600497347289:ios:28048024fa69e1bd867cc8",
-            "web": "1:600497347289:web:9ac8d7dfbd0d0c6d867cc8"
-          }
-        }
-      }
-    }
-  },
   "firestore": {
     "database": "(default)",
     "location": "nam5",
@@ -28,7 +7,7 @@
   },
   "hosting": {
     "public": "build/web",
-    "site": "suryaassociates",
+    "site": "sunassociates",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [{ "source": "**", "destination": "/index.html" }],
     "headers": [
