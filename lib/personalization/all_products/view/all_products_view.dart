@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
+import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
 import 'package:surya_ecommerce/routes/app_router.dart';
 
@@ -146,34 +147,68 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
     final categoriesAsync = ref.watch(categoryListProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'ALL PRODUCTS',
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-            color: AppColors.accentGold,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: CustomAppBar(title: "ALL PRODUCTS"),
       backgroundColor: AppColors.primaryDark,
       drawer: _buildFilterDrawer(categoriesAsync),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
           _buildSearchRow(),
+          if (productsAsync.isLoading)
+            const SliverToBoxAdapter(
+              child: LinearProgressIndicator(
+                color: AppColors.accentGold,
+                backgroundColor: Colors.transparent,
+                minHeight: 2,
+              ),
+            ),
           productsAsync.when(
-            data: (products) => _buildGrid(products),
+            data: (products) {
+              if (products.isEmpty) {
+                return SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.search_off_rounded,
+                          color: AppColors.softGrey,
+                          size: 60,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No products found',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try searching with different keywords',
+                          style: GoogleFonts.nunito(
+                            color: AppColors.softGrey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return _buildGrid(products);
+            },
             loading: () => _buildShimmerGrid(),
             error: (err, stack) => SliverFillRemaining(
+              hasScrollBody: false,
               child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: SelectableText(
-                    'Index Required or Error: $err',
-                    style: GoogleFonts.nunito(color: AppColors.error),
-                    textAlign: TextAlign.center,
+                child: Text(
+                  'No results found',
+                  style: GoogleFonts.outfit(
+                    color: AppColors.softGrey,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -183,9 +218,10 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
               ref.watch(allProductsProvider.notifier).hasMore)
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Center(
-                  child: CircularProgressIndicator(color: AppColors.accentGold),
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: LinearProgressIndicator(
+                  color: AppColors.accentGold,
+                  backgroundColor: Colors.transparent,
                 ),
               ),
             ),
@@ -245,7 +281,7 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
       padding: const EdgeInsets.all(20),
       sliver: SliverGrid(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
+          crossAxisCount: MediaQuery.of(context).size.width > 600 ? 7 : 2,
           mainAxisSpacing: 15,
           crossAxisSpacing: 15,
           childAspectRatio: 0.75,

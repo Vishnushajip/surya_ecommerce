@@ -5,6 +5,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 import 'package:surya_ecommerce/core/responsive/responsive_helper.dart';
+import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:surya_ecommerce/personalization/category/view/home_category.dart';
 
 class AllCategoriesView extends ConsumerWidget {
@@ -17,28 +18,7 @@ class AllCategoriesView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: AppColors.textWhite,
-            size: 20,
-          ),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(
-          'ALL CATEGORIES',
-          style: GoogleFonts.outfit(
-            color: AppColors.textWhite,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.0,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const CustomAppBar(title: "ALL CATEGORIES"),
       body: categoriesAsync.when(
         data: (categories) {
           if (categories.isEmpty) {

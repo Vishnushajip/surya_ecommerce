@@ -8,7 +8,6 @@ import '../personalization/product_details/view/product_details_view.dart';
 import '../personalization/cart/view/cart_view.dart';
 import '../personalization/checkout/view/checkout_view.dart';
 import '../personalization/contact_us/view/contact_us_view.dart';
-import '../personalization/reviews/view/reviews_view.dart';
 import '../personalization/category/view/category_products_view.dart';
 import '../personalization/category/view/all_categories_view.dart';
 import '../personalization/category/view/home_category.dart';
@@ -114,17 +113,7 @@ class AppRouter {
             ),
           ),
 
-          GoRoute(
-            path: '/reviews',
-            name: 'reviews',
-            pageBuilder: (context, state) {
-              final productId = state.uri.queryParameters['productId'];
-              return MaterialPage(
-                key: ValueKey('reviews_$productId'),
-                child: ReviewsView(productId: productId),
-              );
-            },
-          ),
+          
           GoRoute(
             path: '/category/:id',
             name: 'category_products',

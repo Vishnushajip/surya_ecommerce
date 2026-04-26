@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/responsive/responsive_helper.dart';
 import '../../../core/widgets/cached_network_image_widget.dart';
@@ -94,19 +95,9 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
 
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          productAsync.value?.productName.toUpperCase() ?? '',
-          style: GoogleFonts.outfit(
-            color: AppColors.textWhite,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
+      extendBodyBehindAppBar: true,
+      appBar: CustomAppBar(
+        title: productAsync.value?.productName.toUpperCase() ?? '',
       ),
       body: productAsync.when(
         loading: () => const Center(
