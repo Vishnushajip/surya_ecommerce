@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 import 'package:surya_ecommerce/core/responsive/responsive_helper.dart';
+import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
 import 'package:surya_ecommerce/main.dart';
 import 'package:surya_ecommerce/personalization/home/widgets/product_card.dart';
@@ -117,20 +118,7 @@ class CategoryProductsView extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryDark,
-        elevation: 0,
-        title: Text(
-          displayName.toUpperCase(),
-          style: GoogleFonts.outfit(
-            color: AppColors.textWhite,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.0,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: CustomAppBar(title: displayName),
       body: productsAsync.when(
         data: (products) {
           if (products.isEmpty) {

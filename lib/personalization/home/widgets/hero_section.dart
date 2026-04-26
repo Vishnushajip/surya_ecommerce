@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/responsive/responsive_helper.dart';
-import '../../../core/widgets/app_cached_image.dart';
 import '../../../routes/app_router.dart';
 
 class HomeHeroSection extends StatelessWidget {
@@ -21,9 +20,8 @@ class HomeHeroSection extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             height: double.infinity,
-            child: const AppCachedImage(
-              url:
-                  'https://www.luxurybathroomsandtiles.co.uk/cdn/shop/files/Bathroom_suite_with_brushed_brass_fittings_872x700.jpg?v=1707427492',
+            child: Image.asset(
+              'assets/images/Hero_Image.jpeg',
               fit: BoxFit.cover,
             ),
           ),

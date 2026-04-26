@@ -13,8 +13,9 @@ class UserUtils {
   static Future<void> checkAndPromptUser(BuildContext context) async {
     _prefs ??= await SharedPreferences.getInstance();
     final name = _prefs!.getString('user_name');
+    final phone = _prefs!.getString('user_phone');
 
-    if (name == null || name.isEmpty) {
+    if (name == null || name.isEmpty || phone == null || phone.isEmpty) {
       if (context.mounted) {
         _showNameDialog(context);
       }
@@ -78,6 +79,8 @@ class UserUtils {
 
   static void _showNameDialog(BuildContext context) {
     final TextEditingController nameController = TextEditingController();
+    final TextEditingController phoneController = TextEditingController();
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
@@ -98,30 +101,129 @@ class UserUtils {
           ),
           textAlign: TextAlign.center,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Please enter your name to personalize your experience.',
-              style: GoogleFonts.outfit(
-                color: AppColors.softGrey,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: nameController,
-              style: GoogleFonts.outfit(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Enter your name',
-                hintStyle: GoogleFonts.outfit(
-                  color: AppColors.softGrey.withOpacity(0.5),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Please enter your details to personalize your experience.',
+                style: GoogleFonts.outfit(
+                  color: AppColors.softGrey,
+                  fontSize: 14,
                 ),
-                border: InputBorder.none,
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              TextFormField(
+                controller: nameController,
+                style: GoogleFonts.outfit(color: Colors.white),
+                textCapitalization: TextCapitalization.words,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your name';
+                  }
+                  if (value.trim().length < 3) {
+                    return 'Name must be at least 3 characters';
+                  }
+                  if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value.trim())) {
+                    return 'Please enter letters only';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: 'Enter your name',
+                  hintStyle: GoogleFonts.outfit(
+                    color: AppColors.softGrey.withOpacity(0.5),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.primaryDark.withOpacity(0.3),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.borderSoft.withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.borderSoft.withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.accentGold),
+                  ),
+                  errorStyle: GoogleFonts.outfit(
+                    color: Colors.redAccent,
+                    fontSize: 12,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.accentGold,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: phoneController,
+                style: GoogleFonts.outfit(color: Colors.white),
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter phone number';
+                  }
+                  final phoneDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
+                  if (phoneDigits.length != 10) {
+                    return 'Please enter a 10-digit phone number';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: 'Enter 10-digit phone number',
+                  hintStyle: GoogleFonts.outfit(
+                    color: AppColors.softGrey.withOpacity(0.5),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.primaryDark.withOpacity(0.3),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.borderSoft.withOpacity(0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.borderSoft.withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.accentGold),
+                  ),
+                  errorStyle: GoogleFonts.outfit(
+                    color: Colors.redAccent,
+                    fontSize: 12,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.phone_outlined,
+                    color: AppColors.accentGold,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           Center(
@@ -129,15 +231,18 @@ class UserUtils {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
-                  final name = nameController.text.trim();
-                  if (name.isNotEmpty) {
+                  if (formKey.currentState!.validate()) {
+                    final name = nameController.text.trim();
+                    final phone = phoneController.text.trim();
+
                     final prefs = await SharedPreferences.getInstance();
                     final id = Random().nextInt(900000) + 100000;
 
                     await prefs.setString('user_name', name);
+                    await prefs.setString('user_phone', phone);
                     await prefs.setInt('user_id', id);
 
-                    await _registerNewUser(name, id);
+                    await _registerNewUser(name, phone, id);
 
                     if (context.mounted) {
                       Navigator.pop(context);
@@ -174,7 +279,11 @@ class UserUtils {
     );
   }
 
-  static Future<void> _registerNewUser(String name, int id) async {
+  static Future<void> _registerNewUser(
+    String name,
+    String phone,
+    int id,
+  ) async {
     final now = DateTime.now();
     final dateKey =
         "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
@@ -192,6 +301,7 @@ class UserUtils {
     batch.set(userRef, {
       'id': id,
       'name': name,
+      'phone': phone,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
@@ -226,6 +336,7 @@ class UserUtils {
   static Future<void> _updateLiveStatus() async {
     try {
       final name = _prefs?.getString('user_name');
+      final phone = _prefs?.getString('user_phone');
       final id = _prefs?.getInt('user_id');
 
       if (name != null && id != null) {
@@ -235,6 +346,7 @@ class UserUtils {
             .set({
               'id': id,
               'name': name,
+              'phone': phone,
               'lastSeen': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
       }

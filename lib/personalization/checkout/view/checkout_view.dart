@@ -3,8 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/cart_model.dart';
@@ -144,24 +144,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
 
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
-      appBar: AppBar(
-        title: Text(
-          'CHECKOUT',
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: AppColors.primaryDark,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/cart'),
-        ),
-      ),
+      appBar: CustomAppBar(title: 'CHECKOUT'),
       body: cartAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.accentGold),

@@ -53,7 +53,7 @@ class _ReviewListWidgetState extends ConsumerState<ReviewListWidget> {
         final reviews = snapshot.data ?? [];
         if (reviews.isEmpty) {
           if (widget.isTestimonial) return const SizedBox.shrink();
-          return _buildEmptyState();
+          return SizedBox.shrink();
         }
 
         return Column(
@@ -142,24 +142,7 @@ class _ReviewListWidgetState extends ConsumerState<ReviewListWidget> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          children: [
-            Icon(Icons.rate_review_outlined, 
-                color: AppColors.softGrey.withOpacity(0.3), size: 48),
-            const SizedBox(height: 12),
-            Text(
-              'No reviews yet. Be the first to rate!',
-              style: GoogleFonts.outfit(color: AppColors.softGrey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+ 
 }
 
 class _ReviewCard extends StatelessWidget {

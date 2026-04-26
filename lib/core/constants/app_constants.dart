@@ -8,6 +8,7 @@ class AppConstants {
   static const String companyAddress = 'ATHOLI, ATHANI, PIN 673315, KOZHIKODE';
   static const String companyPhone = '+91 9846 203 813';
   static const String companyEmail = 'suryadigitalconnect@gmail.com';
+  static const String googleMapsUrl = 'https://maps.app.goo.gl/QJw73gT5Pscfa94F8?g_st=aw';
 
   // WhatsApp Configuration
   static const String whatsappNumber = '919846203813';

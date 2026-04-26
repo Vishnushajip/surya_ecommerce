@@ -59,20 +59,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
 
       ref.read(isCartHiddenProvider.notifier).state = false;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${product.productName} added to cart'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-            action: SnackBarAction(
-              label: 'VIEW CART',
-              textColor: Colors.white,
-              onPressed: () => AppRouter.goCart(context),
-            ),
-          ),
-        );
-      }
+      if (mounted) {}
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

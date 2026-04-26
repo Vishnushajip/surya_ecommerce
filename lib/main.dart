@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web/web.dart' as web;
 import 'core/theme/app_colors.dart';
@@ -38,9 +39,9 @@ void main() async {
                   size: 64,
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Oops! Something went wrong',
-                  style: TextStyle(
+                  style: GoogleFonts.outfit(
                     color: AppColors.textWhite,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -48,16 +49,19 @@ void main() async {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'We apologize for the inconvenience. Please refresh the page or try again later.',
-                  style: TextStyle(color: AppColors.softGrey, fontSize: 16),
+                  style: GoogleFonts.outfit(
+                    color: AppColors.softGrey,
+                    fontSize: 16,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 if (AppConstants.enableDebugMode) ...[
                   const SizedBox(height: 16),
                   Text(
                     'Error: ${errorDetails.toString()}',
-                    style: const TextStyle(
+                    style: GoogleFonts.outfit(
                       color: AppColors.textMuted,
                       fontSize: 12,
                     ),

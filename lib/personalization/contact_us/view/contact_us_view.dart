@@ -92,9 +92,7 @@ class _ContactUsViewState extends ConsumerState<ContactUsView> {
                       icon: Icons.location_on,
                       title: 'Our Address',
                       content: AppConstants.companyAddress,
-                      onTap: () => _launchUrl(
-                        'https://maps.google.com/?q=${Uri.encodeComponent(AppConstants.companyAddress)}',
-                      ),
+                      onTap: () => _launchUrl(AppConstants.googleMapsUrl),
                     ),
                     const SizedBox(height: 14),
                     _buildInfoCard(
@@ -121,9 +119,7 @@ class _ContactUsViewState extends ConsumerState<ContactUsView> {
                         icon: Icons.location_on,
                         title: 'Our Address',
                         content: AppConstants.companyAddress,
-                        onTap: () => _launchUrl(
-                          'https://maps.google.com/?q=${Uri.encodeComponent(AppConstants.companyAddress)}',
-                        ),
+                        onTap: () => _launchUrl(AppConstants.googleMapsUrl),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -459,9 +455,7 @@ class _ContactUsViewState extends ConsumerState<ContactUsView> {
     final isMobile = ResponsiveHelper.isMobile(context);
 
     return GestureDetector(
-      onTap: () => _launchUrl(
-        'https://maps.google.com/?q=${Uri.encodeComponent(AppConstants.companyAddress)}',
-      ),
+      onTap: () => _launchUrl(AppConstants.googleMapsUrl),
       child: Container(
         width: double.infinity,
         height: isMobile ? 220 : 320,
