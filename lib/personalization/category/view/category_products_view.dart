@@ -10,10 +10,15 @@ import 'package:surya_ecommerce/personalization/home/widgets/product_card.dart';
 import 'package:surya_ecommerce/personalization/category/view/home_category.dart';
 
 final categoryProductsProvider =
-    FutureProvider.family<List<ProductModel>, String>((ref, id) async {
+    FutureProvider.family<List<ProductModel>, (String, String?)>((ref, arg) async {
+      final categoryId = arg.$1;
+      final subCategoryId = arg.$2;
       final repository = ref.watch(productRepositoryProvider);
       try {
-        return await repository.getProductsByCategory(id);
+        if (subCategoryId != null) {
+          return await repository.getProductsBySubCategory(subCategoryId);
+        }
+        return await repository.getProductsByCategory(categoryId);
       } catch (e) {
         return [];
       }
@@ -97,12 +102,17 @@ final _filteredProductsProvider = Provider.autoDispose
 
 class CategoryProductsView extends ConsumerWidget {
   final CategoryModel category;
+  final String? subCategoryId;
 
-  const CategoryProductsView({super.key, required this.category});
+  const CategoryProductsView({
+    super.key,
+    required this.category,
+    this.subCategoryId,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(categoryProductsProvider(category.id));
+    final productsAsync = ref.watch(categoryProductsProvider((category.id, subCategoryId)));
     final categoriesAsync = ref.watch(categoriesProvider);
     final isMobile = ResponsiveHelper.isMobile(context);
 

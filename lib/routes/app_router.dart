@@ -10,6 +10,7 @@ import '../personalization/checkout/view/checkout_view.dart';
 import '../personalization/contact_us/view/contact_us_view.dart';
 import '../personalization/category/view/category_products_view.dart';
 import '../personalization/category/view/all_categories_view.dart';
+import '../personalization/category/view/sub_categories_view.dart';
 import '../personalization/category/view/home_category.dart';
 import '../core/widgets/not_found_view.dart';
 
@@ -119,10 +120,33 @@ class AppRouter {
             name: 'category_products',
             pageBuilder: (context, state) {
               final id = state.pathParameters['id']!;
+              final subId = state.uri.queryParameters['subId'];
+              final subName = state.uri.queryParameters['subName'];
+              
               return MaterialPage(
-                key: ValueKey('category_$id'),
+                key: ValueKey('category_${id}_${subId ?? ''}'),
                 child: CategoryProductsView(
-                  category: CategoryModel(id: id, name: '', imageUrl: ''),
+                  category: CategoryModel(
+                    id: id, 
+                    name: subName ?? '', 
+                    imageUrl: '',
+                  ),
+                  subCategoryId: subId,
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/category/:id/subcategories',
+            name: 'sub_categories',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id']!;
+              final name = state.uri.queryParameters['name'] ?? '';
+              return MaterialPage(
+                key: ValueKey('subcategories_$id'),
+                child: SubCategoriesView(
+                  categoryId: id,
+                  categoryName: name,
                 ),
               );
             },

@@ -13,6 +13,10 @@ class ProductModel {
   final Timestamp listedDate;
   final double ratingAverage;
   final int ratingCount;
+  final String? subCategoryName;
+  final String? subCategoryId;
+  final String? color;
+  final String? watt;
   final Timestamp? manufacturingDate;
   final Timestamp? expiryDate;
   final bool featured;
@@ -35,6 +39,10 @@ class ProductModel {
     this.expiryDate,
     required this.featured,
     required this.isActive,
+    this.subCategoryName,
+    this.subCategoryId,
+    this.color,
+    this.watt,
   });
 
   factory ProductModel.fromFirestore(DocumentSnapshot doc) {
@@ -61,6 +69,10 @@ class ProductModel {
           : null,
       featured: data['featured'] ?? false,
       isActive: data['isActive'] ?? true,
+      subCategoryName: data['subCategoryName'],
+      subCategoryId: data['subCategoryId'],
+      color: data['color'],
+      watt: data['watt'],
     );
   }
 
@@ -93,6 +105,10 @@ class ProductModel {
           : null,
       featured: (json['featured'] as bool?) ?? false,
       isActive: (json['isActive'] as bool?) ?? true,
+      subCategoryName: json['subCategoryName'] as String?,
+      subCategoryId: json['subCategoryId'] as String?,
+      color: json['color'] as String?,
+      watt: json['watt'] as String?,
     );
   }
 
@@ -113,6 +129,10 @@ class ProductModel {
       if (expiryDate != null) 'expiryDate': expiryDate,
       'featured': featured,
       'isActive': isActive,
+      if (subCategoryName != null) 'subCategoryName': subCategoryName,
+      if (subCategoryId != null) 'subCategoryId': subCategoryId,
+      if (color != null) 'color': color,
+      if (watt != null) 'watt': watt,
     };
   }
 
@@ -132,6 +152,10 @@ class ProductModel {
     Timestamp? expiryDate,
     bool? featured,
     bool? isActive,
+    String? subCategoryName,
+    String? subCategoryId,
+    String? color,
+    String? watt,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -149,6 +173,10 @@ class ProductModel {
       expiryDate: expiryDate ?? this.expiryDate,
       featured: featured ?? this.featured,
       isActive: isActive ?? this.isActive,
+      subCategoryName: subCategoryName ?? this.subCategoryName,
+      subCategoryId: subCategoryId ?? this.subCategoryId,
+      color: color ?? this.color,
+      watt: watt ?? this.watt,
     );
   }
 
@@ -179,6 +207,10 @@ class ProductModel {
       'expiryDate': expiryDate?.toDate().toIso8601String(),
       'featured': featured,
       'isActive': isActive,
+      'subCategoryName': subCategoryName,
+      'subCategoryId': subCategoryId,
+      'color': color,
+      'watt': watt,
       'formattedPrice': formattedPrice,
       'formattedRating': formattedRating,
       'hasImages': hasImages,

@@ -45,7 +45,11 @@ class AllCategoriesView extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final category = categories[index];
                 return GestureDetector(
-                  onTap: () => context.go('/category/${category.id}'),
+                  onTap: () => context.pushNamed(
+                    'sub_categories',
+                    pathParameters: {'id': category.id},
+                    queryParameters: {'name': category.name},
+                  ),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),

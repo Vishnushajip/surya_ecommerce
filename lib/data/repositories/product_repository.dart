@@ -211,6 +211,33 @@ class ProductRepository {
     }
   }
 
+  Future<List<ProductModel>> getProductsBySubCategory(
+    String subCategoryId, {
+    int limit = 10,
+    DocumentSnapshot? startAfter,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection(AppConstants.productsCollection)
+          .where('subCategoryId', isEqualTo: subCategoryId);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      query = query.limit(limit);
+
+      final querySnapshot = await query.get();
+
+      return querySnapshot.docs
+          .map((doc) => ProductModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      print("ERROR => $e");
+      throw Exception('Failed to get products by sub-category: $e');
+    }
+  }
+
   Future<List<ProductModel>> getRelatedProducts(
     String productId,
     String category, {

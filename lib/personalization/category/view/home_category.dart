@@ -63,6 +63,66 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
   return enriched;
 });
 
+class SubCategoryModel {
+  final String id;
+  final String categoryId;
+  final String name;
+  final String imageUrl;
+  final int productCount;
+
+  SubCategoryModel({
+    required this.id,
+    required this.categoryId,
+    required this.name,
+    required this.imageUrl,
+    this.productCount = 0,
+  });
+
+  SubCategoryModel copyWith({int? productCount}) {
+    return SubCategoryModel(
+      id: id,
+      categoryId: categoryId,
+      name: name,
+      imageUrl: imageUrl,
+      productCount: productCount ?? this.productCount,
+    );
+  }
+
+  factory SubCategoryModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return SubCategoryModel(
+      id: data['id'] ?? doc.id,
+      categoryId: data['categoryId'] ?? '',
+      name: data['name'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+    );
+  }
+}
+
+final subCategoriesProvider = FutureProvider.family<List<SubCategoryModel>, String>((ref, categoryId) async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('sub_categories')
+      .where('categoryId', isEqualTo: categoryId)
+      .get();
+
+  final subCategories = snapshot.docs
+      .map((doc) => SubCategoryModel.fromFirestore(doc))
+      .toList();
+
+  final enriched = await Future.wait(
+    subCategories.map((subCategory) async {
+      final countSnap = await FirebaseFirestore.instance
+          .collection('products')
+          .where('subCategoryId', isEqualTo: subCategory.id)
+          .count()
+          .get();
+      return subCategory.copyWith(productCount: countSnap.count ?? 0);
+    }),
+  );
+
+  return enriched;
+});
+
 class ShopByCategoryWidget extends ConsumerWidget {
   const ShopByCategoryWidget({super.key});
 
@@ -255,7 +315,11 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.go('/category/${category.id}');
+        context.pushNamed(
+          'sub_categories',
+          pathParameters: {'id': category.id},
+          queryParameters: {'name': category.name},
+        );
       },
       child: Container(
         height: height,

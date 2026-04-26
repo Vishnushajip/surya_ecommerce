@@ -285,6 +285,23 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
           ],
         ),
         const SizedBox(height: 20),
+        if ((product.color != null && product.color!.isNotEmpty) ||
+            (product.watt != null && product.watt!.isNotEmpty)) ...[
+          Row(
+            children: [
+              if (product.color != null && product.color!.isNotEmpty)
+                _buildDetailChip("Color", product.color!),
+              if (product.color != null &&
+                  product.color!.isNotEmpty &&
+                  product.watt != null &&
+                  product.watt!.isNotEmpty)
+                const SizedBox(width: 12),
+              if (product.watt != null && product.watt!.isNotEmpty)
+                _buildDetailChip("Watt", product.watt!),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
         Text(
           product.description,
           style: GoogleFonts.outfit(
@@ -350,5 +367,37 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
       }
     }
     return stars;
+  }
+
+  Widget _buildDetailChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.softGrey.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            "$label: ",
+            style: GoogleFonts.outfit(
+              color: AppColors.softGrey,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.outfit(
+              color: AppColors.textWhite,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
