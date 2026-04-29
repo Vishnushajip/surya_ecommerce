@@ -21,6 +21,9 @@ class ProductModel {
   final Timestamp? expiryDate;
   final bool featured;
   final bool isActive;
+  final String? gst;
+  final String? bldc;
+  final double? mrp;
 
   const ProductModel({
     required this.id,
@@ -43,6 +46,9 @@ class ProductModel {
     this.subCategoryId,
     this.color,
     this.watt,
+    this.gst,
+    this.bldc,
+    this.mrp,
   });
 
   factory ProductModel.fromFirestore(DocumentSnapshot doc) {
@@ -73,6 +79,9 @@ class ProductModel {
       subCategoryId: data['subCategoryId'],
       color: data['color'],
       watt: data['watt'],
+      gst: data['gst'],
+      bldc: data['bldc'],
+      mrp: (data['mrp'] ?? 0).toDouble(),
     );
   }
 
@@ -109,6 +118,9 @@ class ProductModel {
       subCategoryId: json['subCategoryId'] as String?,
       color: json['color'] as String?,
       watt: json['watt'] as String?,
+      gst: json['gst'] as String?,
+      bldc: json['bldc'] as String?,
+      mrp: (json['mrp'] as num?)?.toDouble(),
     );
   }
 
@@ -133,50 +145,44 @@ class ProductModel {
       if (subCategoryId != null) 'subCategoryId': subCategoryId,
       if (color != null) 'color': color,
       if (watt != null) 'watt': watt,
+      if (gst != null) 'gst': gst,
+      if (bldc != null) 'bldc': bldc,
+      if (mrp != null) 'mrp': mrp,
     };
   }
 
   ProductModel copyWith({
     String? id,
-    String? productName,
-    String? productCategory,
-    String? description,
-    double? price,
-    List<String>? imageUrls,
-    int? quantity,
-    Timestamp? createdDate,
-    Timestamp? listedDate,
-    double? ratingAverage,
-    int? ratingCount,
-    Timestamp? manufacturingDate,
-    Timestamp? expiryDate,
-    bool? featured,
-    bool? isActive,
-    String? subCategoryName,
     String? subCategoryId,
     String? color,
     String? watt,
+    String? gst,
+    String? bldc,
+    double? mrp,
   }) {
     return ProductModel(
       id: id ?? this.id,
-      productName: productName ?? this.productName,
-      productCategory: productCategory ?? this.productCategory,
-      description: description ?? this.description,
-      price: price ?? this.price,
-      imageUrls: imageUrls ?? this.imageUrls,
-      quantity: quantity ?? this.quantity,
-      createdDate: createdDate ?? this.createdDate,
-      listedDate: listedDate ?? this.listedDate,
-      ratingAverage: ratingAverage ?? this.ratingAverage,
-      ratingCount: ratingCount ?? this.ratingCount,
+      productName: productName,
+      productCategory: productCategory,
+      description: description,
+      price: price,
+      imageUrls: imageUrls,
+      quantity: quantity,
+      createdDate: createdDate,
+      listedDate: listedDate,
+      ratingAverage: ratingAverage,
+      ratingCount: ratingCount,
       manufacturingDate: manufacturingDate ?? this.manufacturingDate,
       expiryDate: expiryDate ?? this.expiryDate,
-      featured: featured ?? this.featured,
-      isActive: isActive ?? this.isActive,
+      featured: featured,
+      isActive: isActive,
       subCategoryName: subCategoryName ?? this.subCategoryName,
       subCategoryId: subCategoryId ?? this.subCategoryId,
       color: color ?? this.color,
       watt: watt ?? this.watt,
+      gst: gst ?? this.gst,
+      bldc: bldc ?? this.bldc,
+      mrp: mrp ?? this.mrp,
     );
   }
 
@@ -208,9 +214,11 @@ class ProductModel {
       'featured': featured,
       'isActive': isActive,
       'subCategoryName': subCategoryName,
-      'subCategoryId': subCategoryId,
       'color': color,
       'watt': watt,
+      'gst': gst,
+      'bldc': bldc,
+      'mrp': mrp,
       'formattedPrice': formattedPrice,
       'formattedRating': formattedRating,
       'hasImages': hasImages,

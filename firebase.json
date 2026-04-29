@@ -12,11 +12,19 @@
     "rewrites": [{ "source": "**", "destination": "/index.html" }],
     "headers": [
       {
-        "source": "**/*.@(js|css|wasm|html)",
+        "source": "/**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=31536000"
+            "value": "no-cache, no-store, must-revalidate"
+          },
+          {
+            "key": "Cross-Origin-Opener-Policy",
+            "value": "same-origin"
+          },
+          {
+            "key": "Cross-Origin-Embedder-Policy",
+            "value": "credentialless"
           }
         ]
       }

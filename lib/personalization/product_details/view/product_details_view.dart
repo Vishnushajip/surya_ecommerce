@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,6 +12,7 @@ import '../view_model/product_details_view_model.dart';
 import '../../cart/view_model/cart_view_model.dart';
 import '../../cart/widgets/floating_cart_sheet.dart';
 import '../../reviews/widgets/review_list_widget.dart';
+import '../../home/widgets/product_card.dart';
 import '../../../routes/app_router.dart';
 
 class ProductDetailsView extends ConsumerStatefulWidget {
@@ -139,6 +141,8 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
               _buildInfoSection(product, isInCart),
               const SizedBox(height: 50),
               ReviewListWidget(productId: product.id),
+              const SizedBox(height: 50),
+              _buildSuggestedProductsSection(product),
             ],
           ),
         ),
@@ -153,8 +157,10 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
         _buildGallerySection(product),
         const SizedBox(height: 30),
         _buildInfoSection(product, isInCart),
-        const SizedBox(height: 50),
+        const SizedBox(height: 40),
         ReviewListWidget(productId: product.id),
+        const SizedBox(height: 50),
+        _buildSuggestedProductsSection(product),
       ],
     );
   }
@@ -221,21 +227,49 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.accentGold.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.accentGold.withOpacity(0.3)),
-          ),
-          child: Text(
-            product.productCategory,
-            style: GoogleFonts.outfit(
-              color: AppColors.accentGold,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.accentGold.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.accentGold.withOpacity(0.3),
+                ),
+              ),
+              child: Text(
+                product.productCategory,
+                style: GoogleFonts.outfit(
+                  color: AppColors.accentGold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+            if (product.bldc != null && product.bldc!.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Text(
+                  product.bldc!,
+                  style: GoogleFonts.outfit(
+                    color: Colors.blue,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 15),
         Text(
@@ -273,17 +307,30 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
                 color: AppColors.accentGold,
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              "₹ 2499",
-              style: GoogleFonts.outfit(
-                fontSize: 16,
-                color: AppColors.softGrey,
-                decoration: TextDecoration.lineThrough,
+            if (product.mrp != null && product.mrp! > product.price) ...[
+              const SizedBox(width: 12),
+              Text(
+                "₹ ${product.mrp!.toStringAsFixed(0)}",
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  color: AppColors.softGrey,
+                  decoration: TextDecoration.lineThrough,
+                ),
               ),
-            ),
+            ],
           ],
         ),
+        if (product.gst != null && product.gst!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            product.gst!,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: AppColors.softGrey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         if ((product.color != null && product.color!.isNotEmpty) ||
             (product.watt != null && product.watt!.isNotEmpty)) ...[
@@ -397,6 +444,91 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestedProductsSection(ProductModel currentProduct) {
+    final suggestedProductsAsync = ref.watch(
+      suggestedProductsProvider(currentProduct.id),
+    );
+
+    return suggestedProductsAsync.when(
+      data: (page) {
+        if (page.items.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                children: [
+                  Text(
+                    'YOU MAY ALSO LIKE',
+                    style: GoogleFonts.outfit(
+                      color: AppColors.accentGold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      context.pushNamed('all_suggestions', pathParameters: {'id': currentProduct.id});
+                    },
+                    child: Text(
+                      'SEE ALL',
+                      style: GoogleFonts.outfit(
+                        color: AppColors.accentGold,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (page.hasMore)
+                    TextButton(
+                      onPressed: () => ref
+                          .read(suggestedProductsProvider(currentProduct.id).notifier)
+                          .loadMore(),
+                      child: Text(
+                        'LOAD MORE',
+                        style: GoogleFonts.outfit(
+                          color: AppColors.accentGold,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 240,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: page.items.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 16),
+                itemBuilder: (context, index) {
+                  return SizedBox(
+                    width: 160,
+                    child: ProductCard(product: page.items[index]),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (e, s) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: SelectableText(
+          'Error loading suggestions: $e',
+          style: const TextStyle(color: Colors.red, fontSize: 12),
+        ),
       ),
     );
   }

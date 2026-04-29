@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 import 'package:surya_ecommerce/core/responsive/responsive_helper.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
+import 'package:surya_ecommerce/core/widgets/searchable_filter_list.dart' show SearchableFilterList, FilterOption;
 import 'package:surya_ecommerce/data/models/product_model.dart';
 import 'package:surya_ecommerce/main.dart';
 import 'package:surya_ecommerce/personalization/home/widgets/product_card.dart';
@@ -30,22 +32,27 @@ class _FilterState {
   final String searchQuery;
   final RangeValues priceRange;
   final SortOption sortOption;
+  final String? selectedSubCategoryId;
 
   const _FilterState({
     this.searchQuery = '',
     this.priceRange = const RangeValues(0, 100000),
     this.sortOption = SortOption.none,
+    this.selectedSubCategoryId,
   });
 
   _FilterState copyWith({
     String? searchQuery,
     RangeValues? priceRange,
     SortOption? sortOption,
+    String? selectedSubCategoryId,
+    bool clearSubCategory = false,
   }) {
     return _FilterState(
       searchQuery: searchQuery ?? this.searchQuery,
       priceRange: priceRange ?? this.priceRange,
       sortOption: sortOption ?? this.sortOption,
+      selectedSubCategoryId: clearSubCategory ? null : (selectedSubCategoryId ?? this.selectedSubCategoryId),
     );
   }
 }
@@ -58,6 +65,8 @@ class _FilterNotifier extends StateNotifier<_FilterState> {
       state = state.copyWith(priceRange: range);
   void setSortOption(SortOption option) =>
       state = state.copyWith(sortOption: option);
+  void setSubCategory(String? id) =>
+      state = state.copyWith(selectedSubCategoryId: id, clearSubCategory: id == null);
   void reset(double maxPrice) =>
       state = _FilterState(priceRange: RangeValues(0, maxPrice));
 }
@@ -80,7 +89,11 @@ final _filteredProductsProvider = Provider.autoDispose
         final matchesPrice =
             p.price >= filter.priceRange.start &&
             p.price <= filter.priceRange.end;
-        return matchesSearch && matchesPrice;
+        
+        final matchesSubCategory = filter.selectedSubCategoryId == null || 
+                                   p.subCategoryId == filter.selectedSubCategoryId;
+
+        return matchesSearch && matchesPrice && matchesSubCategory;
       }).toList();
 
       switch (filter.sortOption) {
@@ -112,7 +125,8 @@ class CategoryProductsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(categoryProductsProvider((category.id, subCategoryId)));
+    final productsAsync =
+        ref.watch(categoryProductsProvider((category.id, subCategoryId)));
     final categoriesAsync = ref.watch(categoriesProvider);
     final isMobile = ResponsiveHelper.isMobile(context);
 
@@ -129,6 +143,7 @@ class CategoryProductsView extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.primaryDark,
       appBar: CustomAppBar(title: displayName),
+      endDrawer: _buildFilterDrawer(context, ref, categoriesAsync, category),
       body: productsAsync.when(
         data: (products) {
           if (products.isEmpty) {
@@ -178,6 +193,8 @@ class CategoryProductsView extends ConsumerWidget {
             maxPrice: maxPrice,
             isMobile: isMobile,
             displayName: displayName,
+            subCategoryId: subCategoryId,
+            category: category,
           );
         },
         loading: () => const Center(
@@ -192,19 +209,121 @@ class CategoryProductsView extends ConsumerWidget {
       ),
     );
   }
-}
 
+  Widget _buildFilterDrawer(
+      BuildContext context,
+      WidgetRef ref,
+      AsyncValue<List<CategoryModel>> categoriesAsync,
+      CategoryModel currentCategory) {
+    final filter = ref.watch(_filterProvider);
+
+    return Drawer(
+      backgroundColor: AppColors.primaryDark,
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const SizedBox(height: 50),
+          FutureBuilder<QuerySnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('sub_categories')
+                .where('categoryId', isEqualTo: currentCategory.id)
+                .get(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                    child: CircularProgressIndicator(
+                        color: AppColors.accentGold));
+              }
+              final subCats = snapshot.data?.docs ?? [];
+              final options = [
+                const FilterOption(id: 'all', label: 'All Subcategories'),
+                ...subCats.map((doc) => FilterOption(
+                    id: doc.id, label: doc['name'] as String)),
+              ];
+
+              return SearchableFilterList(
+                title: 'SUBCATEGORIES',
+                options: options,
+                selectedId: filter.selectedSubCategoryId ?? 'all',
+                onOptionSelected: (id) {
+                  if (id == 'all') {
+                    ref.read(_filterProvider.notifier).setSubCategory(null);
+                  } else {
+                    ref.read(_filterProvider.notifier).setSubCategory(id);
+                  }
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 30),
+          Text(
+            'SORT BY',
+            style: GoogleFonts.outfit(
+              color: AppColors.accentGold,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const Divider(color: AppColors.borderSoft),
+          ...SortOption.values.map((option) {
+            if (option == SortOption.none) return const SizedBox.shrink();
+            final label = option == SortOption.priceLowHigh
+                ? 'Price: Low to High'
+                : option == SortOption.priceHighLow
+                    ? 'Price: High to Low'
+                    : 'Newest First';
+            final isSelected = filter.sortOption == option;
+
+            return ListTile(
+              title: Text(
+                label,
+                style: GoogleFonts.nunito(
+                  color: isSelected ? AppColors.accentGold : Colors.white,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              trailing: isSelected
+                  ? const Icon(Icons.check, color: AppColors.accentGold, size: 18)
+                  : null,
+              onTap: () {
+                ref.read(_filterProvider.notifier).setSortOption(option);
+              },
+            );
+          }),
+          const SizedBox(height: 50),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentGold,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('APPLY FILTERS'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class _ProductListBody extends ConsumerStatefulWidget {
   final List<ProductModel> products;
   final double maxPrice;
   final bool isMobile;
   final String displayName;
+  final String? subCategoryId;
+  final CategoryModel category;
 
   const _ProductListBody({
     required this.products,
     required this.maxPrice,
     required this.isMobile,
     required this.displayName,
+    required this.category,
+    this.subCategoryId,
   });
 
   @override
@@ -219,6 +338,9 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(_filterProvider.notifier).reset(widget.maxPrice);
+      if (widget.subCategoryId != null) {
+        ref.read(_filterProvider.notifier).setSubCategory(widget.subCategoryId);
+      }
     });
   }
 
@@ -228,13 +350,8 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
     super.dispose();
   }
 
-  void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _FilterBottomSheet(maxPrice: widget.maxPrice),
-    );
+  void _showFilterSidebar() {
+    Scaffold.of(context).openEndDrawer();
   }
 
   @override
@@ -246,7 +363,8 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
         filter.searchQuery.isNotEmpty ||
         filter.priceRange.start > 0 ||
         filter.priceRange.end < widget.maxPrice ||
-        filter.sortOption != SortOption.none;
+        filter.sortOption != SortOption.none ||
+        filter.selectedSubCategoryId != null;
 
     return Column(
       children: [
@@ -311,7 +429,7 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
               ),
               const SizedBox(width: 10),
               GestureDetector(
-                onTap: _showFilterBottomSheet,
+                onTap: _showFilterSidebar,
                 child: Container(
                   height: 46,
                   width: 46,
@@ -338,8 +456,6 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        _SortChips(isMobile: widget.isMobile),
         const SizedBox(height: 8),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: widget.isMobile ? 16 : 64),
@@ -436,225 +552,6 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
                     },
                   ),
                 ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SortChips extends ConsumerWidget {
-  final bool isMobile;
-  const _SortChips({required this.isMobile});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(_filterProvider);
-
-    final options = [
-      (SortOption.none, 'Default'),
-      (SortOption.priceLowHigh, 'Price: Low → High'),
-      (SortOption.priceHighLow, 'Price: High → Low'),
-      (SortOption.newest, 'Newest'),
-    ];
-
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 64),
-        itemCount: options.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final (option, label) = options[index];
-          final isSelected = filter.sortOption == option;
-
-          return GestureDetector(
-            onTap: () =>
-                ref.read(_filterProvider.notifier).setSortOption(option),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.accentGold : AppColors.cardDark,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.accentGold
-                      : AppColors.borderSoft.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Text(
-                label,
-                style: GoogleFonts.outfit(
-                  color: isSelected
-                      ? AppColors.primaryDark
-                      : AppColors.softGrey,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _FilterBottomSheet extends ConsumerStatefulWidget {
-  final double maxPrice;
-  const _FilterBottomSheet({required this.maxPrice});
-
-  @override
-  ConsumerState<_FilterBottomSheet> createState() => _FilterBottomSheetState();
-}
-
-class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
-  late RangeValues _localRange;
-
-  @override
-  void initState() {
-    super.initState();
-    _localRange = ref.read(_filterProvider).priceRange;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.borderSoft.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Text(
-                'Filter by Price',
-                style: GoogleFonts.outfit(
-                  color: AppColors.textWhite,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Icon(
-                  Icons.close_rounded,
-                  color: AppColors.softGrey,
-                  size: 22,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _PriceTag(
-                label: 'Min',
-                value: '₹${_localRange.start.toStringAsFixed(0)}',
-              ),
-              _PriceTag(
-                label: 'Max',
-                value: '₹${_localRange.end.toStringAsFixed(0)}',
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.accentGold,
-              inactiveTrackColor: AppColors.borderSoft.withValues(alpha: 0.3),
-              thumbColor: AppColors.accentGold,
-              overlayColor: AppColors.accentGold.withValues(alpha: 0.15),
-              rangeThumbShape: const RoundRangeSliderThumbShape(
-                enabledThumbRadius: 10,
-              ),
-              trackHeight: 4,
-            ),
-            child: RangeSlider(
-              values: _localRange,
-              min: 0,
-              max: widget.maxPrice,
-              divisions: 100,
-              onChanged: (v) => setState(() => _localRange = v),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                ref.read(_filterProvider.notifier).setPriceRange(_localRange);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentGold,
-                foregroundColor: AppColors.primaryDark,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'APPLY FILTER',
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PriceTag extends StatelessWidget {
-  final String label;
-  final String value;
-  const _PriceTag({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.outfit(
-            color: AppColors.softGrey,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: GoogleFonts.outfit(
-            color: AppColors.accentGold,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
         ),
       ],
     );

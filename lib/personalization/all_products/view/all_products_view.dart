@@ -5,8 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
+import 'package:surya_ecommerce/core/widgets/app_cached_image.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
+import 'package:surya_ecommerce/core/widgets/searchable_filter_list.dart';
 import 'package:surya_ecommerce/routes/app_router.dart';
 
 final firestoreProvider = Provider((ref) => FirebaseFirestore.instance);
@@ -36,6 +38,7 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
 
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  String? _selectedSubCategory;
   ProductSort _currentSort = ProductSort.newest;
 
   @override
@@ -50,45 +53,93 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
           .collection('products')
           .where('isActive', isEqualTo: true);
 
-      // Filtering
       if (_selectedCategory != 'All') {
-        query = query.where('categoryName', isEqualTo: _selectedCategory);
+        final categories = await ref
+            .read(firestoreProvider)
+            .collection('categories')
+            .get();
+        String? categoryId;
+
+        for (var doc in categories.docs) {
+          if ((doc.data()['productCategory'] ?? '') == _selectedCategory) {
+            categoryId = doc.id;
+            break;
+          }
+        }
+        if (categoryId != null) {
+          query = query.where('productCategory', isEqualTo: categoryId);
+
+          if (_selectedSubCategory != null) {
+            query = query.where(
+              'subCategoryId',
+              isEqualTo: _selectedSubCategory,
+            );
+          }
+        }
       }
 
-      // Sorting
       query = query.orderBy(
         _currentSort.field,
         descending: _currentSort.descending,
       );
 
-      // Pagination
+      if (_searchQuery.isNotEmpty) {
+        final snapshot = await query.get();
+        final allProducts = snapshot.docs
+            .map((doc) => ProductModel.fromFirestore(doc))
+            .toList();
+
+        final filtered = allProducts.where((p) {
+          final name = p.productName.toLowerCase();
+          final query = _searchQuery.toLowerCase().trim();
+          final category = p.productCategory.toLowerCase();
+
+          if (query.isEmpty) return true;
+
+          if (name.contains(query) || category.contains(query)) return true;
+
+          final queryWords = query.split(RegExp(r'\s+'));
+          final nameWords = name.split(RegExp(r'\s+'));
+
+          bool allWordsMatch = queryWords.every((qWord) {
+            if (qWord.isEmpty) return true;
+            return name.contains(qWord) || category.contains(qWord);
+          });
+          if (allWordsMatch) return true;
+
+          for (var qWord in queryWords) {
+            if (qWord.length < 3) continue;
+            for (var nWord in nameWords) {
+              if (nWord.length < 3) continue;
+              if (qWord.contains(nWord) || nWord.contains(qWord)) return true;
+            }
+          }
+
+          return false;
+        }).toList();
+
+        _hasMore = false;
+        return filtered;
+      }
+
       if (isLoadMore && _lastDoc != null) {
         query = query.startAfterDocument(_lastDoc!);
       }
 
       final snapshot = await query.limit(10).get();
 
-      if (snapshot.docs.length < 10) _hasMore = false;
+      if (snapshot.docs.length < 10) {
+        _hasMore = false;
+      } else {
+        _hasMore = true;
+      }
       if (snapshot.docs.isNotEmpty) _lastDoc = snapshot.docs.last;
 
-      final products = snapshot.docs
+      return snapshot.docs
           .map((doc) => ProductModel.fromFirestore(doc))
           .toList();
-
-      if (_searchQuery.isNotEmpty) {
-        return products
-            .where(
-              (p) => p.productName.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ),
-            )
-            .toList();
-      }
-
-      return products;
     } catch (e) {
       debugPrint('🔥 FIRESTORE ERROR: $e');
-
       rethrow;
     }
   }
@@ -101,9 +152,23 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
     state = AsyncData([...currentProducts, ...moreProducts]);
   }
 
-  void updateFilters({String? search, String? category, ProductSort? sort}) {
+  void updateFilters({
+    String? search,
+    String? category,
+    String? subCategory,
+    ProductSort? sort,
+    bool clearSubCategory = false,
+  }) {
     _searchQuery = search ?? _searchQuery;
-    _selectedCategory = category ?? _selectedCategory;
+    if (category != null && category != _selectedCategory) {
+      _selectedCategory = category;
+      _selectedSubCategory = null; // Reset subcategory when category changes
+    }
+    if (clearSubCategory) {
+      _selectedSubCategory = null;
+    } else {
+      _selectedSubCategory = subCategory ?? _selectedSubCategory;
+    }
     _currentSort = sort ?? _currentSort;
     _lastDoc = null;
     _hasMore = true;
@@ -171,10 +236,9 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.search_off_rounded,
-                          color: AppColors.softGrey,
-                          size: 60,
+                        Image.network(
+                          "https://cdn-icons-png.flaticon.com/128/14005/14005532.png",
+                          height: 60,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -204,11 +268,26 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
             error: (err, stack) => SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
-                child: Text(
-                  'No results found',
-                  style: GoogleFonts.outfit(
-                    color: AppColors.softGrey,
-                    fontSize: 16,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 40,
+                      ),
+                      const SizedBox(height: 16),
+                      SelectableText(
+                        'Error: $err\n\nStacktrace: $stack',
+                        style: GoogleFonts.outfit(
+                          color: AppColors.softGrey,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -257,18 +336,27 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Builder(
-              builder: (context) {
-                return IconButton.filled(
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                  icon: const Icon(Icons.tune),
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.accentGold,
-                    foregroundColor: Colors.black,
+              builder: (context) => GestureDetector(
+                onTap: () => Scaffold.of(context).openDrawer(),
+                child: Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.cardDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.borderSoft.withOpacity(0.3),
+                    ),
                   ),
-                );
-              },
+                  child: const Icon(
+                    Icons.tune_rounded,
+                    color: AppColors.accentGold,
+                    size: 20,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -322,6 +410,10 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
   }
 
   Widget _buildFilterDrawer(AsyncValue<List<String>> categoriesAsync) {
+    final notifier = ref.read(allProductsProvider.notifier);
+    final selectedCategory = notifier._selectedCategory;
+    final selectedSubCategory = notifier._selectedSubCategory;
+
     return Drawer(
       backgroundColor: AppColors.primaryDark,
       child: ListView(
@@ -333,55 +425,110 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
             style: GoogleFonts.outfit(
               color: AppColors.accentGold,
               fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
           const Divider(color: AppColors.borderSoft),
           categoriesAsync.when(
-            data: (categories) => Wrap(
-              spacing: 8,
-              children: categories
-                  .map(
-                    (cat) => Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ActionChip(
-                        label: Text(cat),
-                        onPressed: () {
-                          ref
-                              .read(allProductsProvider.notifier)
-                              .updateFilters(category: cat);
-                          Navigator.pop(context);
-                        },
-                        backgroundColor: AppColors.cardDark,
-                        labelStyle: GoogleFonts.outfit(color: Colors.white),
-                      ),
-                    ),
-                  )
-                  .toList(),
+            data: (categories) => SearchableFilterList(
+              title: 'CATEGORIES',
+              options: categories.map((cat) => FilterOption(id: cat, label: cat)).toList(),
+              selectedId: selectedCategory,
+              onOptionSelected: (cat) {
+                if (cat != null) {
+                  ref.read(allProductsProvider.notifier).updateFilters(category: cat);
+                }
+              },
             ),
-            loading: () => const CircularProgressIndicator(),
+            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.accentGold)),
             error: (e, s) => const Text('Error loading categories'),
           ),
+          if (selectedCategory != 'All') ...[
+            const SizedBox(height: 10),
+            FutureBuilder<QuerySnapshot?>(
+              future: FirebaseFirestore.instance
+                  .collection('categories')
+                  .where('productCategory', isEqualTo: selectedCategory)
+                  .get()
+                  .then((catSnap) {
+                if (catSnap.docs.isEmpty) return null;
+                return FirebaseFirestore.instance
+                    .collection('sub_categories')
+                    .where('categoryId', isEqualTo: catSnap.docs.first.id)
+                    .get();
+              }),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: AppColors.accentGold));
+                }
+                final subCats = snapshot.data?.docs ?? [];
+                final options = [
+                  const FilterOption(id: 'all', label: 'All Subcategories'),
+                  ...subCats.map((doc) => FilterOption(id: doc.id, label: doc['name'] as String)),
+                ];
+
+                return SearchableFilterList(
+                  title: 'SUBCATEGORIES',
+                  options: options,
+                  selectedId: selectedSubCategory ?? 'all',
+                  onOptionSelected: (id) {
+                    if (id == 'all') {
+                      ref.read(allProductsProvider.notifier).updateFilters(clearSubCategory: true);
+                    } else {
+                      ref.read(allProductsProvider.notifier).updateFilters(subCategory: id);
+                    }
+                  },
+                );
+              },
+            ),
+          ],
           const SizedBox(height: 30),
           Text(
             'SORT BY',
             style: GoogleFonts.outfit(
               color: AppColors.accentGold,
               fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
           const Divider(color: AppColors.borderSoft),
-          ...ProductSort.values.map(
-            (sort) => ListTile(
+          ...ProductSort.values.map((sort) {
+            final isSelected = notifier._currentSort == sort;
+            return ListTile(
               title: Text(
                 sort.label,
-                style: GoogleFonts.nunito(color: Colors.white),
+                style: GoogleFonts.nunito(
+                  color: isSelected ? AppColors.accentGold : Colors.white,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
+              trailing: isSelected
+                  ? const Icon(
+                      Icons.check,
+                      color: AppColors.accentGold,
+                      size: 18,
+                    )
+                  : null,
               onTap: () {
                 ref
                     .read(allProductsProvider.notifier)
                     .updateFilters(sort: sort);
-                Navigator.pop(context);
               },
+            );
+          }),
+          const SizedBox(height: 50),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentGold,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('APPLY FILTERS'),
             ),
           ),
         ],
@@ -413,18 +560,11 @@ class _ProductCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                child: product.imageUrls.isNotEmpty
-                    ? Image.network(
-                        product.imageUrls.first,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      )
-                    : const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: AppColors.softGrey,
-                        ),
-                      ),
+                child: AppCachedImage(
+                  url: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                ),
               ),
             ),
             Padding(

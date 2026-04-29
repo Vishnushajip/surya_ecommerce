@@ -238,26 +238,51 @@ class ProductRepository {
     }
   }
 
-  Future<List<ProductModel>> getRelatedProducts(
+  Future<ProductsPage> getSuggestedProductsPage(
     String productId,
     String category, {
+    String? subCategoryId,
     int limit = 6,
+    DocumentSnapshot? startAfter,
   }) async {
     try {
-      final querySnapshot = await _firestore
+      Query query = _firestore
           .collection(AppConstants.productsCollection)
-          .where('isActive', isEqualTo: true)
-          .where('productCategory', isEqualTo: category)
-          .where(FieldPath.documentId, isNotEqualTo: productId)
-          .orderBy('ratingAverage', descending: true)
-          .limit(limit)
-          .get();
+          .where('isActive', isEqualTo: true);
 
-      return querySnapshot.docs
+      if (subCategoryId != null && subCategoryId.isNotEmpty) {
+        query = query.where('subCategoryId', isEqualTo: subCategoryId);
+      } else {
+        query = query.where('productCategory', isEqualTo: category);
+      }
+
+      query = query.orderBy('ratingAverage', descending: true);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final querySnapshot = await query.limit(limit + 5).get(); 
+
+      final docs = querySnapshot.docs;
+      
+      final filteredDocs = docs.where((doc) => doc.id != productId).toList();
+      
+      final hasMore = filteredDocs.length > limit;
+      final pageDocs = hasMore ? filteredDocs.take(limit).toList() : filteredDocs;
+
+      final items = pageDocs
           .map((doc) => ProductModel.fromFirestore(doc))
           .toList();
+      final lastDocument = docs.isEmpty ? startAfter : docs.last;
+
+      return ProductsPage(
+        items: items,
+        lastDocument: lastDocument,
+        hasMore: hasMore,
+      );
     } catch (e) {
-      throw Exception('Failed to get related products: $e');
+      throw Exception('Failed to get suggested products: $e');
     }
   }
 

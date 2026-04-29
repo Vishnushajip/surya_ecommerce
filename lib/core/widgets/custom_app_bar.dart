@@ -64,7 +64,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   )
                 else
                   _AppBarIconButton(
-                    iconWidget: Image.network(
+                    iconWidget: Image.asset(
                       'assets/images/logo_bg_removed.png',
                       width: 32,
                       height: 32,

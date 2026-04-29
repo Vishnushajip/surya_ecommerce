@@ -5,12 +5,12 @@ import '../personalization/home/view/home_view.dart';
 import '../personalization/about_us/view/about_us_view.dart';
 import '../personalization/all_products/view/all_products_view.dart';
 import '../personalization/product_details/view/product_details_view.dart';
+import '../personalization/product_details/view/all_suggestions_view.dart';
 import '../personalization/cart/view/cart_view.dart';
 import '../personalization/checkout/view/checkout_view.dart';
 import '../personalization/contact_us/view/contact_us_view.dart';
 import '../personalization/category/view/category_products_view.dart';
 import '../personalization/category/view/all_categories_view.dart';
-import '../personalization/category/view/sub_categories_view.dart';
 import '../personalization/category/view/home_category.dart';
 import '../core/widgets/not_found_view.dart';
 
@@ -90,6 +90,17 @@ class AppRouter {
             },
           ),
           GoRoute(
+            path: '/products/:id/suggestions',
+            name: 'all_suggestions',
+            pageBuilder: (context, state) {
+              final productId = state.pathParameters['id']!;
+              return MaterialPage(
+                key: ValueKey('suggestions_$productId'),
+                child: AllSuggestionsView(productId: productId),
+              );
+            },
+          ),
+          GoRoute(
             path: '/cart',
             name: 'cart',
             pageBuilder: (context, state) =>
@@ -132,21 +143,6 @@ class AppRouter {
                     imageUrl: '',
                   ),
                   subCategoryId: subId,
-                ),
-              );
-            },
-          ),
-          GoRoute(
-            path: '/category/:id/subcategories',
-            name: 'sub_categories',
-            pageBuilder: (context, state) {
-              final id = state.pathParameters['id']!;
-              final name = state.uri.queryParameters['name'] ?? '';
-              return MaterialPage(
-                key: ValueKey('subcategories_$id'),
-                child: SubCategoriesView(
-                  categoryId: id,
-                  categoryName: name,
                 ),
               );
             },

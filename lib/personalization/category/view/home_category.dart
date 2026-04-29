@@ -168,7 +168,7 @@ class _CategorySection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(isMobile: isMobile),
-          const SizedBox(height: 36),
+          const SizedBox(height: 10),
           _StaggeredCategoryGrid(
             categories: displayedCategories,
             isMobile: isMobile,
@@ -316,9 +316,9 @@ class _CategoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         context.pushNamed(
-          'sub_categories',
+          'category_products',
           pathParameters: {'id': category.id},
-          queryParameters: {'name': category.name},
+          queryParameters: {'subName': category.name},
         );
       },
       child: Container(
@@ -383,7 +383,7 @@ class _CategoryCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      '${category.productCount} ITEMS',
+                      '${category.productCount} Products',
                       style: GoogleFonts.outfit(
                         color: AppColors.primaryDark,
                         fontSize: 8,

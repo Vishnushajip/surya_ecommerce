@@ -46,9 +46,9 @@ class AllCategoriesView extends ConsumerWidget {
                 final category = categories[index];
                 return GestureDetector(
                   onTap: () => context.pushNamed(
-                    'sub_categories',
+                    'category_products',
                     pathParameters: {'id': category.id},
-                    queryParameters: {'name': category.name},
+                    queryParameters: {'subName': category.name},
                   ),
                   child: Container(
                     decoration: BoxDecoration(
@@ -91,7 +91,7 @@ class AllCategoriesView extends ConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${category.productCount} ITEMS',
+                                '${category.productCount} Products',
                                 style: GoogleFonts.outfit(
                                   color: AppColors.accentGold,
                                   fontSize: 10,

@@ -21,7 +21,7 @@ class HomeHeroSection extends StatelessWidget {
             width: double.infinity,
             height: double.infinity,
             child: Image.asset(
-              'assets/images/Hero_Image.jpeg',
+              'assets/images/hero.jpeg',
               fit: BoxFit.cover,
             ),
           ),
