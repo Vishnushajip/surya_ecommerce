@@ -7,24 +7,12 @@ import 'package:shimmer/shimmer.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 import 'package:surya_ecommerce/core/widgets/app_cached_image.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
+import 'package:surya_ecommerce/core/widgets/filter_dropdown_field.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
-import 'package:surya_ecommerce/core/widgets/searchable_filter_list.dart';
+import 'package:surya_ecommerce/personalization/category/view/home_category.dart';
 import 'package:surya_ecommerce/routes/app_router.dart';
 
 final firestoreProvider = Provider((ref) => FirebaseFirestore.instance);
-
-final categoryListProvider = StreamProvider<List<String>>((ref) {
-  return ref.watch(firestoreProvider).collection('products').snapshots().map((
-    snapshot,
-  ) {
-    final categories = snapshot.docs
-        .map((doc) => doc.data()['categoryName'] as String? ?? 'Uncategorized')
-        .toSet()
-        .toList();
-    categories.sort();
-    return ['All', ...categories];
-  });
-});
 
 final allProductsProvider =
     AsyncNotifierProvider<ProductsNotifier, List<ProductModel>>(() {
@@ -37,9 +25,13 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
   bool get hasMore => _hasMore;
 
   String _searchQuery = '';
-  String _selectedCategory = 'All';
-  String? _selectedSubCategory;
+  String? _selectedCategoryId;
+  String? _selectedSubCategoryId;
   ProductSort _currentSort = ProductSort.newest;
+
+  String? get selectedCategoryId => _selectedCategoryId;
+  String? get selectedSubCategoryId => _selectedSubCategoryId;
+  ProductSort get currentSort => _currentSort;
 
   @override
   Future<List<ProductModel>> build() async {
@@ -53,28 +45,13 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
           .collection('products')
           .where('isActive', isEqualTo: true);
 
-      if (_selectedCategory != 'All') {
-        final categories = await ref
-            .read(firestoreProvider)
-            .collection('categories')
-            .get();
-        String? categoryId;
-
-        for (var doc in categories.docs) {
-          if ((doc.data()['productCategory'] ?? '') == _selectedCategory) {
-            categoryId = doc.id;
-            break;
-          }
-        }
-        if (categoryId != null) {
-          query = query.where('productCategory', isEqualTo: categoryId);
-
-          if (_selectedSubCategory != null) {
-            query = query.where(
-              'subCategoryId',
-              isEqualTo: _selectedSubCategory,
-            );
-          }
+      if (_selectedCategoryId != null) {
+        query = query.where('productCategory', isEqualTo: _selectedCategoryId);
+        if (_selectedSubCategoryId != null) {
+          query = query.where(
+            'subCategoryId',
+            isEqualTo: _selectedSubCategoryId,
+          );
         }
       }
 
@@ -154,21 +131,28 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
 
   void updateFilters({
     String? search,
-    String? category,
-    String? subCategory,
+    String? categoryId,
+    String? subCategoryId,
     ProductSort? sort,
+    bool clearCategory = false,
     bool clearSubCategory = false,
   }) {
     _searchQuery = search ?? _searchQuery;
-    if (category != null && category != _selectedCategory) {
-      _selectedCategory = category;
-      _selectedSubCategory = null; // Reset subcategory when category changes
+
+    if (clearCategory) {
+      _selectedCategoryId = null;
+      _selectedSubCategoryId = null;
+    } else if (categoryId != null && categoryId != _selectedCategoryId) {
+      _selectedCategoryId = categoryId;
+      _selectedSubCategoryId = null;
     }
+
     if (clearSubCategory) {
-      _selectedSubCategory = null;
-    } else {
-      _selectedSubCategory = subCategory ?? _selectedSubCategory;
+      _selectedSubCategoryId = null;
+    } else if (subCategoryId != null) {
+      _selectedSubCategoryId = subCategoryId;
     }
+
     _currentSort = sort ?? _currentSort;
     _lastDoc = null;
     _hasMore = true;
@@ -209,12 +193,11 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(allProductsProvider);
-    final categoriesAsync = ref.watch(categoryListProvider);
 
     return Scaffold(
       appBar: CustomAppBar(title: "ALL PRODUCTS"),
       backgroundColor: AppColors.primaryDark,
-      drawer: _buildFilterDrawer(categoriesAsync),
+      drawer: _buildFilterDrawer(),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -409,10 +392,13 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
     );
   }
 
-  Widget _buildFilterDrawer(AsyncValue<List<String>> categoriesAsync) {
+  Widget _buildFilterDrawer() {
+    ref.watch(allProductsProvider);
     final notifier = ref.read(allProductsProvider.notifier);
-    final selectedCategory = notifier._selectedCategory;
-    final selectedSubCategory = notifier._selectedSubCategory;
+    final selectedCategoryId = notifier.selectedCategoryId;
+    final selectedSubCategoryId = notifier.selectedSubCategoryId;
+    final currentSort = notifier.currentSort;
+    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Drawer(
       backgroundColor: AppColors.primaryDark,
@@ -420,102 +406,96 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 50),
-          Text(
-            'FILTER BY CATEGORY',
-            style: GoogleFonts.outfit(
-              color: AppColors.accentGold,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const Divider(color: AppColors.borderSoft),
           categoriesAsync.when(
-            data: (categories) => SearchableFilterList(
-              title: 'CATEGORIES',
-              options: categories.map((cat) => FilterOption(id: cat, label: cat)).toList(),
-              selectedId: selectedCategory,
-              onOptionSelected: (cat) {
-                if (cat != null) {
-                  ref.read(allProductsProvider.notifier).updateFilters(category: cat);
-                }
-              },
+            data: (categories) {
+              final options = categories
+                  .map((c) => DropdownOption(id: c.id, label: c.name))
+                  .toList();
+              return FilterDropdownField(
+                label: 'CATEGORY',
+                hintText: 'All categories',
+                prefixIcon: Icons.grid_view_rounded,
+                options: options,
+                selectedId: selectedCategoryId,
+                onSelected: (id) {
+                  ref
+                      .read(allProductsProvider.notifier)
+                      .updateFilters(
+                        categoryId: id,
+                        clearCategory: id == null,
+                      );
+                },
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.accentGold),
+              ),
             ),
-            loading: () => const Center(child: CircularProgressIndicator(color: AppColors.accentGold)),
-            error: (e, s) => const Text('Error loading categories'),
+            error: (e, s) => Text(
+              'Error loading categories',
+              style: GoogleFonts.outfit(color: AppColors.softGrey),
+            ),
           ),
-          if (selectedCategory != 'All') ...[
-            const SizedBox(height: 10),
-            FutureBuilder<QuerySnapshot?>(
-              future: FirebaseFirestore.instance
-                  .collection('categories')
-                  .where('productCategory', isEqualTo: selectedCategory)
-                  .get()
-                  .then((catSnap) {
-                if (catSnap.docs.isEmpty) return null;
-                return FirebaseFirestore.instance
-                    .collection('sub_categories')
-                    .where('categoryId', isEqualTo: catSnap.docs.first.id)
-                    .get();
-              }),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.accentGold));
-                }
-                final subCats = snapshot.data?.docs ?? [];
-                final options = [
-                  const FilterOption(id: 'all', label: 'All Subcategories'),
-                  ...subCats.map((doc) => FilterOption(id: doc.id, label: doc['name'] as String)),
-                ];
-
-                return SearchableFilterList(
-                  title: 'SUBCATEGORIES',
-                  options: options,
-                  selectedId: selectedSubCategory ?? 'all',
-                  onOptionSelected: (id) {
-                    if (id == 'all') {
-                      ref.read(allProductsProvider.notifier).updateFilters(clearSubCategory: true);
-                    } else {
-                      ref.read(allProductsProvider.notifier).updateFilters(subCategory: id);
-                    }
+          if (selectedCategoryId != null) ...[
+            const SizedBox(height: 24),
+            Consumer(
+              builder: (context, ref, _) {
+                final subCatsAsync =
+                    ref.watch(subCategoriesProvider(selectedCategoryId));
+                return subCatsAsync.when(
+                  data: (subCats) {
+                    final options = subCats
+                        .map((s) =>
+                            DropdownOption(id: s.id, label: s.name))
+                        .toList();
+                    return FilterDropdownField(
+                      label: 'SUBCATEGORY',
+                      hintText: 'All subcategories',
+                      prefixIcon: Icons.category_outlined,
+                      options: options,
+                      selectedId: selectedSubCategoryId,
+                      onSelected: (id) {
+                        ref.read(allProductsProvider.notifier).updateFilters(
+                              subCategoryId: id,
+                              clearSubCategory: id == null,
+                            );
+                      },
+                    );
                   },
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                          color: AppColors.accentGold),
+                    ),
+                  ),
+                  error: (_, _) => const SizedBox.shrink(),
                 );
               },
             ),
           ],
-          const SizedBox(height: 30),
-          Text(
-            'SORT BY',
-            style: GoogleFonts.outfit(
-              color: AppColors.accentGold,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
+          const SizedBox(height: 24),
+          FilterDropdownField(
+            label: 'SORT BY',
+            hintText: 'Newest First',
+            prefixIcon: Icons.sort_rounded,
+            options: ProductSort.values
+                .map((s) => DropdownOption(id: s.name, label: s.label))
+                .toList(),
+            selectedId: currentSort.name,
+            onSelected: (id) {
+              if (id == null) return;
+              final sort = ProductSort.values.firstWhere(
+                (s) => s.name == id,
+                orElse: () => ProductSort.newest,
+              );
+              ref
+                  .read(allProductsProvider.notifier)
+                  .updateFilters(sort: sort);
+            },
           ),
-          const Divider(color: AppColors.borderSoft),
-          ...ProductSort.values.map((sort) {
-            final isSelected = notifier._currentSort == sort;
-            return ListTile(
-              title: Text(
-                sort.label,
-                style: GoogleFonts.nunito(
-                  color: isSelected ? AppColors.accentGold : Colors.white,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              trailing: isSelected
-                  ? const Icon(
-                      Icons.check,
-                      color: AppColors.accentGold,
-                      size: 18,
-                    )
-                  : null,
-              onTap: () {
-                ref
-                    .read(allProductsProvider.notifier)
-                    .updateFilters(sort: sort);
-              },
-            );
-          }),
           const SizedBox(height: 50),
           SizedBox(
             width: double.infinity,

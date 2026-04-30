@@ -189,6 +189,19 @@ class ProductRepository {
     int limit = 10,
     DocumentSnapshot? startAfter,
   }) async {
+    final page = await getProductsByCategoryPage(
+      id,
+      limit: limit,
+      startAfter: startAfter,
+    );
+    return page.items;
+  }
+
+  Future<ProductsPage> getProductsByCategoryPage(
+    String id, {
+    int limit = AppConstants.defaultPageSize,
+    DocumentSnapshot? startAfter,
+  }) async {
     try {
       Query query = _firestore
           .collection(AppConstants.productsCollection)
@@ -198,15 +211,24 @@ class ProductRepository {
         query = query.startAfterDocument(startAfter);
       }
 
-      query = query.limit(limit);
+      final pageLimit = limit.clamp(1, AppConstants.maxPageSize);
+      final querySnapshot = await query.limit(pageLimit + 1).get();
 
-      final querySnapshot = await query.get();
+      final docs = querySnapshot.docs;
+      final hasMore = docs.length > pageLimit;
+      final pageDocs = hasMore ? docs.take(pageLimit).toList() : docs;
 
-      return querySnapshot.docs
+      final items = pageDocs
           .map((doc) => ProductModel.fromFirestore(doc))
           .toList();
+      final lastDocument = pageDocs.isEmpty ? startAfter : pageDocs.last;
+
+      return ProductsPage(
+        items: items,
+        lastDocument: lastDocument,
+        hasMore: hasMore,
+      );
     } catch (e) {
-      print("ERROR => $e");
       throw Exception('Failed to get products by category: $e');
     }
   }

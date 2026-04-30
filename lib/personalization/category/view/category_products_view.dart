@@ -5,26 +5,57 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 import 'package:surya_ecommerce/core/responsive/responsive_helper.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
-import 'package:surya_ecommerce/core/widgets/searchable_filter_list.dart' show SearchableFilterList, FilterOption;
+import 'package:surya_ecommerce/core/widgets/filter_dropdown_field.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
 import 'package:surya_ecommerce/main.dart';
 import 'package:surya_ecommerce/personalization/home/widgets/product_card.dart';
 import 'package:surya_ecommerce/personalization/category/view/home_category.dart';
 
-final categoryProductsProvider =
-    FutureProvider.family<List<ProductModel>, (String, String?)>((ref, arg) async {
-      final categoryId = arg.$1;
-      final subCategoryId = arg.$2;
-      final repository = ref.watch(productRepositoryProvider);
-      try {
-        if (subCategoryId != null) {
-          return await repository.getProductsBySubCategory(subCategoryId);
-        }
-        return await repository.getProductsByCategory(categoryId);
-      } catch (e) {
-        return [];
-      }
-    });
+class CategoryProductsNotifier
+    extends AutoDisposeFamilyAsyncNotifier<List<ProductModel>, String> {
+  DocumentSnapshot? _lastDoc;
+  bool _hasMore = true;
+
+  bool get hasMore => _hasMore;
+
+  @override
+  Future<List<ProductModel>> build(String categoryId) async {
+    _lastDoc = null;
+    _hasMore = true;
+    final repository = ref.watch(productRepositoryProvider);
+    try {
+      final page = await repository.getProductsByCategoryPage(categoryId);
+      _lastDoc = page.lastDocument;
+      _hasMore = page.hasMore;
+      return page.items;
+    } catch (_) {
+      _hasMore = false;
+      return [];
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (!_hasMore || state.isLoading) return;
+    final current = state.value ?? [];
+    try {
+      final repository = ref.read(productRepositoryProvider);
+      final page = await repository.getProductsByCategoryPage(
+        arg,
+        startAfter: _lastDoc,
+      );
+      _lastDoc = page.lastDocument;
+      _hasMore = page.hasMore;
+      state = AsyncData([...current, ...page.items]);
+    } catch (_) {
+      _hasMore = false;
+    }
+  }
+}
+
+final categoryProductsProvider = AsyncNotifierProvider.autoDispose
+    .family<CategoryProductsNotifier, List<ProductModel>, String>(
+      CategoryProductsNotifier.new,
+    );
 
 enum SortOption { none, priceLowHigh, priceHighLow, newest }
 
@@ -52,7 +83,9 @@ class _FilterState {
       searchQuery: searchQuery ?? this.searchQuery,
       priceRange: priceRange ?? this.priceRange,
       sortOption: sortOption ?? this.sortOption,
-      selectedSubCategoryId: clearSubCategory ? null : (selectedSubCategoryId ?? this.selectedSubCategoryId),
+      selectedSubCategoryId: clearSubCategory
+          ? null
+          : (selectedSubCategoryId ?? this.selectedSubCategoryId),
     );
   }
 }
@@ -65,8 +98,10 @@ class _FilterNotifier extends StateNotifier<_FilterState> {
       state = state.copyWith(priceRange: range);
   void setSortOption(SortOption option) =>
       state = state.copyWith(sortOption: option);
-  void setSubCategory(String? id) =>
-      state = state.copyWith(selectedSubCategoryId: id, clearSubCategory: id == null);
+  void setSubCategory(String? id) => state = state.copyWith(
+    selectedSubCategoryId: id,
+    clearSubCategory: id == null,
+  );
   void reset(double maxPrice) =>
       state = _FilterState(priceRange: RangeValues(0, maxPrice));
 }
@@ -89,9 +124,10 @@ final _filteredProductsProvider = Provider.autoDispose
         final matchesPrice =
             p.price >= filter.priceRange.start &&
             p.price <= filter.priceRange.end;
-        
-        final matchesSubCategory = filter.selectedSubCategoryId == null || 
-                                   p.subCategoryId == filter.selectedSubCategoryId;
+
+        final matchesSubCategory =
+            filter.selectedSubCategoryId == null ||
+            p.subCategoryId == filter.selectedSubCategoryId;
 
         return matchesSearch && matchesPrice && matchesSubCategory;
       }).toList();
@@ -125,8 +161,7 @@ class CategoryProductsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync =
-        ref.watch(categoryProductsProvider((category.id, subCategoryId)));
+    final productsAsync = ref.watch(categoryProductsProvider(category.id));
     final categoriesAsync = ref.watch(categoriesProvider);
     final isMobile = ResponsiveHelper.isMobile(context);
 
@@ -211,11 +246,15 @@ class CategoryProductsView extends ConsumerWidget {
   }
 
   Widget _buildFilterDrawer(
-      BuildContext context,
-      WidgetRef ref,
-      AsyncValue<List<CategoryModel>> categoriesAsync,
-      CategoryModel currentCategory) {
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<CategoryModel>> categoriesAsync,
+    CategoryModel currentCategory,
+  ) {
     final filter = ref.watch(_filterProvider);
+    final subCategoriesAsync = ref.watch(
+      subCategoriesProvider(currentCategory.id),
+    );
 
     return Drawer(
       backgroundColor: AppColors.primaryDark,
@@ -223,73 +262,53 @@ class CategoryProductsView extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 50),
-          FutureBuilder<QuerySnapshot>(
-            future: FirebaseFirestore.instance
-                .collection('sub_categories')
-                .where('categoryId', isEqualTo: currentCategory.id)
-                .get(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.accentGold));
-              }
-              final subCats = snapshot.data?.docs ?? [];
+          subCategoriesAsync.when(
+            data: (subCats) {
               final options = [
-                const FilterOption(id: 'all', label: 'All Subcategories'),
-                ...subCats.map((doc) => FilterOption(
-                    id: doc.id, label: doc['name'] as String)),
+                ...subCats.map((s) => DropdownOption(id: s.id, label: s.name)),
               ];
-
-              return SearchableFilterList(
-                title: 'SUBCATEGORIES',
+              return FilterDropdownField(
+                label: 'SUBCATEGORY',
+                hintText: 'All subcategories',
+                prefixIcon: Icons.category_outlined,
                 options: options,
-                selectedId: filter.selectedSubCategoryId ?? 'all',
-                onOptionSelected: (id) {
-                  if (id == 'all') {
-                    ref.read(_filterProvider.notifier).setSubCategory(null);
-                  } else {
-                    ref.read(_filterProvider.notifier).setSubCategory(id);
-                  }
+                selectedId: filter.selectedSubCategoryId,
+                onSelected: (id) {
+                  ref.read(_filterProvider.notifier).setSubCategory(id);
                 },
               );
             },
-          ),
-          const SizedBox(height: 30),
-          Text(
-            'SORT BY',
-            style: GoogleFonts.outfit(
-              color: AppColors.accentGold,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const Divider(color: AppColors.borderSoft),
-          ...SortOption.values.map((option) {
-            if (option == SortOption.none) return const SizedBox.shrink();
-            final label = option == SortOption.priceLowHigh
-                ? 'Price: Low to High'
-                : option == SortOption.priceHighLow
-                    ? 'Price: High to Low'
-                    : 'Newest First';
-            final isSelected = filter.sortOption == option;
-
-            return ListTile(
-              title: Text(
-                label,
-                style: GoogleFonts.nunito(
-                  color: isSelected ? AppColors.accentGold : Colors.white,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.accentGold),
               ),
-              trailing: isSelected
-                  ? const Icon(Icons.check, color: AppColors.accentGold, size: 18)
-                  : null,
-              onTap: () {
-                ref.read(_filterProvider.notifier).setSortOption(option);
-              },
-            );
-          }),
+            ),
+            error: (_, _) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 24),
+          FilterDropdownField(
+            label: 'SORT BY',
+            hintText: 'Default',
+            prefixIcon: Icons.sort_rounded,
+            options: const [
+              DropdownOption(id: 'priceLowHigh', label: 'Price: Low to High'),
+              DropdownOption(id: 'priceHighLow', label: 'Price: High to Low'),
+              DropdownOption(id: 'newest', label: 'Newest First'),
+            ],
+            selectedId: filter.sortOption == SortOption.none
+                ? null
+                : filter.sortOption.name,
+            onSelected: (id) {
+              final option = id == null
+                  ? SortOption.none
+                  : SortOption.values.firstWhere(
+                      (o) => o.name == id,
+                      orElse: () => SortOption.none,
+                    );
+              ref.read(_filterProvider.notifier).setSortOption(option);
+            },
+          ),
           const SizedBox(height: 50),
           SizedBox(
             width: double.infinity,
@@ -299,7 +318,8 @@ class CategoryProductsView extends ConsumerWidget {
                 backgroundColor: AppColors.accentGold,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('APPLY FILTERS'),
             ),
@@ -309,6 +329,7 @@ class CategoryProductsView extends ConsumerWidget {
     );
   }
 }
+
 class _ProductListBody extends ConsumerStatefulWidget {
   final List<ProductModel> products;
   final double maxPrice;
@@ -332,10 +353,13 @@ class _ProductListBody extends ConsumerStatefulWidget {
 
 class _ProductListBodyState extends ConsumerState<_ProductListBody> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoadingMore = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(_filterProvider.notifier).reset(widget.maxPrice);
       if (widget.subCategoryId != null) {
@@ -346,8 +370,30 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 300) {
+      _maybeLoadMore();
+    }
+  }
+
+  Future<void> _maybeLoadMore() async {
+    if (_isLoadingMore) return;
+    final notifier = ref.read(
+      categoryProductsProvider(widget.category.id).notifier,
+    );
+    if (!notifier.hasMore) return;
+    setState(() => _isLoadingMore = true);
+    await notifier.loadMore();
+    if (!mounted) return;
+    setState(() => _isLoadingMore = false);
   }
 
   void _showFilterSidebar() {
@@ -358,6 +404,13 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
   Widget build(BuildContext context) {
     final filter = ref.watch(_filterProvider);
     final filtered = ref.watch(_filteredProductsProvider(widget.products));
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      if (_scrollController.position.maxScrollExtent <= 0) {
+        _maybeLoadMore();
+      }
+    });
 
     final isFiltered =
         filter.searchQuery.isNotEmpty ||
@@ -522,6 +575,7 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
                   ),
                 )
               : SingleChildScrollView(
+                  controller: _scrollController,
                   padding: EdgeInsets.symmetric(
                     horizontal: widget.isMobile ? 16 : 64,
                     vertical: 4,
@@ -537,17 +591,38 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
                               spacing * (crossAxisCount - 1)) /
                           crossAxisCount;
 
-                      return RepaintBoundary(
-                        child: Wrap(
-                          spacing: spacing,
-                          runSpacing: spacing,
-                          children: filtered.map((product) {
-                            return SizedBox(
-                              width: itemWidth,
-                              child: ProductCard(product: product),
-                            );
-                          }).toList(),
-                        ),
+                      final hasMore = ref
+                          .watch(
+                            categoryProductsProvider(
+                              widget.category.id,
+                            ).notifier,
+                          )
+                          .hasMore;
+
+                      return Column(
+                        children: [
+                          RepaintBoundary(
+                            child: Wrap(
+                              spacing: spacing,
+                              runSpacing: spacing,
+                              children: filtered.map((product) {
+                                return SizedBox(
+                                  width: itemWidth,
+                                  child: ProductCard(product: product),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          if (hasMore)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.accentGold,
+                                ),
+                              ),
+                            ),
+                        ],
                       );
                     },
                   ),
