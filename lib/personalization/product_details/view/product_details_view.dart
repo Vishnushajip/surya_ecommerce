@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/responsive/responsive_helper.dart';
 import '../../../core/widgets/cached_network_image_widget.dart';
@@ -52,6 +55,40 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
     _pageController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  void _openShareSheet(ProductModel product) {
+    final shareUrl = kIsWeb
+        ? Uri.base.toString()
+        : '${Uri.base.origin}/products/${product.id}';
+    final shareText =
+        '${product.productName} - ₹${product.price.toStringAsFixed(0)}';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.cardDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => _ShareSheet(
+        shareUrl: shareUrl,
+        shareText: shareText,
+        productName: product.productName,
+        onCopied: () {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Link copied to clipboard',
+                style: GoogleFonts.outfit(color: AppColors.primaryDark),
+              ),
+              backgroundColor: AppColors.accentGold,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _addToCart(ProductModel product) async {
@@ -395,13 +432,22 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
           ],
         ),
         const SizedBox(height: 15),
-        Text(
-          product.productName,
-          style: GoogleFonts.outfit(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textWhite,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                product.productName,
+                style: GoogleFonts.outfit(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textWhite,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildShareButton(product),
+          ],
         ),
         const SizedBox(height: 8),
         _buildItemCode(product.id),
@@ -598,6 +644,28 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
     );
   }
 
+  Widget _buildShareButton(ProductModel product) {
+    return Material(
+      color: AppColors.accentGold.withValues(alpha: 0.12),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => _openShareSheet(product),
+        child: const Padding(
+          padding: EdgeInsets.all(10),
+          child: Tooltip(
+            message: 'Share',
+            child: Icon(
+              Icons.share_rounded,
+              color: AppColors.accentGold,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailChip(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -658,7 +726,10 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
                   const Spacer(),
                   TextButton(
                     onPressed: () {
-                      context.pushNamed('all_suggestions', pathParameters: {'id': currentProduct.id});
+                      context.pushNamed(
+                        'all_suggestions',
+                        pathParameters: {'id': currentProduct.id},
+                      );
                     },
                     child: Text(
                       'SEE ALL',
@@ -672,7 +743,11 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
                   if (page.hasMore)
                     TextButton(
                       onPressed: () => ref
-                          .read(suggestedProductsProvider(currentProduct.id).notifier)
+                          .read(
+                            suggestedProductsProvider(
+                              currentProduct.id,
+                            ).notifier,
+                          )
                           .loadMore(),
                       child: Text(
                         'LOAD MORE',
@@ -716,26 +791,274 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
   }
 }
 
+class _ShareSheet extends StatelessWidget {
+  final String shareUrl;
+  final String shareText;
+  final String productName;
+  final VoidCallback onCopied;
+
+  const _ShareSheet({
+    required this.shareUrl,
+    required this.shareText,
+    required this.productName,
+    required this.onCopied,
+  });
+
+  String get _encodedUrl => Uri.encodeComponent(shareUrl);
+  String get _encodedText => Uri.encodeComponent(shareText);
+  String get _encodedTextWithUrl =>
+      Uri.encodeComponent('$shareText\n$shareUrl');
+
+  Future<void> _open(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    final ok = await launchUrl(
+      uri,
+      mode: kIsWeb
+          ? LaunchMode.platformDefault
+          : LaunchMode.externalApplication,
+      webOnlyWindowName: kIsWeb ? '_blank' : null,
+    );
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open share target'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _copy(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: shareUrl));
+    if (!context.mounted) return;
+    Navigator.of(context).pop();
+    onCopied();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final targets = <_ShareTarget>[
+      _ShareTarget(
+        label: 'WhatsApp',
+        icon: const FaIcon(
+          FontAwesomeIcons.whatsapp,
+          color: Color(0xFF25D366),
+          size: 22,
+        ),
+        color: const Color(0xFF25D366),
+        onTap: () => _open(context, 'https://wa.me/?text=$_encodedTextWithUrl'),
+      ),
+      _ShareTarget(
+        label: 'Telegram',
+        icon: const FaIcon(
+          FontAwesomeIcons.telegram,
+          color: Color(0xFF26A5E4),
+          size: 22,
+        ),
+        color: const Color(0xFF26A5E4),
+        onTap: () => _open(
+          context,
+          'https://t.me/share/url?url=$_encodedUrl&text=$_encodedText',
+        ),
+      ),
+      _ShareTarget(
+        label: 'X',
+        icon: const FaIcon(
+          FontAwesomeIcons.xTwitter,
+          color: Color(0xFF000000),
+          size: 22,
+        ),
+        color: const Color(0xFF000000),
+        onTap: () => _open(
+          context,
+          'https://twitter.com/intent/tweet?url=$_encodedUrl&text=$_encodedText',
+        ),
+      ),
+      _ShareTarget(
+        label: 'Facebook',
+        icon: const FaIcon(
+          FontAwesomeIcons.facebook,
+          color: Color(0xFF1877F2),
+          size: 22,
+        ),
+        color: const Color(0xFF1877F2),
+        onTap: () => _open(
+          context,
+          'https://www.facebook.com/sharer/sharer.php?u=$_encodedUrl',
+        ),
+      ),
+      _ShareTarget(
+        label: 'LinkedIn',
+        icon: const FaIcon(
+          FontAwesomeIcons.linkedin,
+          color: Color(0xFF0A66C2),
+          size: 22,
+        ),
+        color: const Color(0xFF0A66C2),
+        onTap: () => _open(
+          context,
+          'https://www.linkedin.com/sharing/share-offsite/?url=$_encodedUrl',
+        ),
+      ),
+      _ShareTarget(
+        label: 'Email',
+        icon: const Icon(
+          Icons.email_rounded,
+          color: Color(0xFFEA4335),
+          size: 22,
+        ),
+        color: const Color(0xFFEA4335),
+        onTap: () => _open(
+          context,
+          'mailto:?subject=${Uri.encodeComponent(productName)}&body=$_encodedTextWithUrl',
+        ),
+      ),
+      _ShareTarget(
+        label: 'Copy Link',
+        icon: const Icon(
+          Icons.link_rounded,
+          color: AppColors.accentGold,
+          size: 22,
+        ),
+        color: AppColors.accentGold,
+        onTap: () => _copy(context),
+      ),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.softGrey.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'SHARE THIS PRODUCT',
+              style: GoogleFonts.outfit(
+                color: AppColors.accentGold,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              productName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.outfit(
+                color: AppColors.textWhite,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: targets
+                  .map(
+                    (t) =>
+                        SizedBox(width: 72, child: _ShareTargetTile(target: t)),
+                  )
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareTarget {
+  final String label;
+  final Widget icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ShareTarget({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+}
+
+class _ShareTargetTile extends StatelessWidget {
+  final _ShareTarget target;
+  const _ShareTargetTile({required this.target});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: target.onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: target.color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(color: target.color.withValues(alpha: 0.4)),
+              ),
+              child: Center(child: target.icon),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              target.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                color: AppColors.textWhite,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DragScrollBehavior extends MaterialScrollBehavior {
   const _DragScrollBehavior();
 
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.trackpad,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.trackpad,
+  };
 }
 
 class _ImageViewerScreen extends StatefulWidget {
   final List<String> urls;
   final int initialIndex;
 
-  const _ImageViewerScreen({
-    required this.urls,
-    required this.initialIndex,
-  });
+  const _ImageViewerScreen({required this.urls, required this.initialIndex});
 
   @override
   State<_ImageViewerScreen> createState() => _ImageViewerScreenState();
