@@ -432,25 +432,16 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
           ],
         ),
         const SizedBox(height: 15),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                product.productName,
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textWhite,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            _buildShareButton(product),
-          ],
+        Text(
+          product.productName,
+          style: GoogleFonts.outfit(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textWhite,
+          ),
         ),
         const SizedBox(height: 8),
-        _buildItemCode(product.id),
+        _buildItemCode(product.itemCode?? "N/A"),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -467,28 +458,37 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
         ),
         const SizedBox(height: 20),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              "₹ ${product.price.toStringAsFixed(0)}",
-              style: GoogleFonts.outfit(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.accentGold,
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    "₹ ${product.price.toStringAsFixed(0)}",
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.accentGold,
+                    ),
+                  ),
+                  if (product.mrp != null && product.mrp! > product.price) ...[
+                    const SizedBox(width: 12),
+                    Text(
+                      "₹ ${product.mrp!.toStringAsFixed(0)}",
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        color: AppColors.softGrey,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (product.mrp != null && product.mrp! > product.price) ...[
-              const SizedBox(width: 12),
-              Text(
-                "₹ ${product.mrp!.toStringAsFixed(0)}",
-                style: GoogleFonts.outfit(
-                  fontSize: 16,
-                  color: AppColors.softGrey,
-                  decoration: TextDecoration.lineThrough,
-                ),
-              ),
-            ],
+            const SizedBox(width: 8),
+            _buildShareButton(product),
           ],
         ),
         if (product.gst != null && product.gst!.isNotEmpty) ...[

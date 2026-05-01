@@ -9,6 +9,7 @@ import 'package:surya_ecommerce/core/widgets/app_cached_image.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:surya_ecommerce/core/widgets/filter_dropdown_field.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
+import 'package:surya_ecommerce/personalization/brand/view/home_brand.dart';
 import 'package:surya_ecommerce/personalization/category/view/home_category.dart';
 import 'package:surya_ecommerce/routes/app_router.dart';
 
@@ -27,10 +28,12 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
   String _searchQuery = '';
   String? _selectedCategoryId;
   String? _selectedSubCategoryId;
+  String? _selectedBrandId;
   ProductSort _currentSort = ProductSort.newest;
 
   String? get selectedCategoryId => _selectedCategoryId;
   String? get selectedSubCategoryId => _selectedSubCategoryId;
+  String? get selectedBrandId => _selectedBrandId;
   ProductSort get currentSort => _currentSort;
 
   @override
@@ -53,6 +56,10 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
             isEqualTo: _selectedSubCategoryId,
           );
         }
+      }
+
+      if (_selectedBrandId != null) {
+        query = query.where('brandId', isEqualTo: _selectedBrandId);
       }
 
       query = query.orderBy(
@@ -133,9 +140,11 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
     String? search,
     String? categoryId,
     String? subCategoryId,
+    String? brandId,
     ProductSort? sort,
     bool clearCategory = false,
     bool clearSubCategory = false,
+    bool clearBrand = false,
   }) {
     _searchQuery = search ?? _searchQuery;
 
@@ -151,6 +160,12 @@ class ProductsNotifier extends AsyncNotifier<List<ProductModel>> {
       _selectedSubCategoryId = null;
     } else if (subCategoryId != null) {
       _selectedSubCategoryId = subCategoryId;
+    }
+
+    if (clearBrand) {
+      _selectedBrandId = null;
+    } else if (brandId != null) {
+      _selectedBrandId = brandId;
     }
 
     _currentSort = sort ?? _currentSort;
@@ -397,8 +412,10 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
     final notifier = ref.read(allProductsProvider.notifier);
     final selectedCategoryId = notifier.selectedCategoryId;
     final selectedSubCategoryId = notifier.selectedSubCategoryId;
+    final selectedBrandId = notifier.selectedBrandId;
     final currentSort = notifier.currentSort;
     final categoriesAsync = ref.watch(categoriesProvider);
+    final brandsAsync = ref.watch(brandsProvider);
 
     return Drawer(
       backgroundColor: AppColors.primaryDark,
@@ -476,6 +493,36 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
               },
             ),
           ],
+          const SizedBox(height: 24),
+          brandsAsync.when(
+            data: (brands) {
+              final options = brands
+                  .map((b) => DropdownOption(id: b.id, label: b.name))
+                  .toList();
+              return FilterDropdownField(
+                label: 'BRAND',
+                hintText: 'All brands',
+                prefixIcon: Icons.local_offer_outlined,
+                options: options,
+                selectedId: selectedBrandId,
+                onSelected: (id) {
+                  ref
+                      .read(allProductsProvider.notifier)
+                      .updateFilters(
+                        brandId: id,
+                        clearBrand: id == null,
+                      );
+                },
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.accentGold),
+              ),
+            ),
+            error: (_, _) => const SizedBox.shrink(),
+          ),
           const SizedBox(height: 24),
           FilterDropdownField(
             label: 'SORT BY',
@@ -593,7 +640,8 @@ enum ProductSort {
   oldest('Oldest First', 'createdDate', false),
   priceLow('Price: Low to High', 'price', false),
   priceHigh('Price: High to Low', 'price', true),
-  rating('Top Rated', 'ratingAverage', true);
+  rating('Top Rated', 'ratingAverage', true),
+  brand('Brand (A–Z)', 'brandName', false);
 
   final String label;
   final String field;

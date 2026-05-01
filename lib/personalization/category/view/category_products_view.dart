@@ -8,6 +8,7 @@ import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:surya_ecommerce/core/widgets/filter_dropdown_field.dart';
 import 'package:surya_ecommerce/data/models/product_model.dart';
 import 'package:surya_ecommerce/main.dart';
+import 'package:surya_ecommerce/personalization/brand/view/home_brand.dart';
 import 'package:surya_ecommerce/personalization/home/widgets/product_card.dart';
 import 'package:surya_ecommerce/personalization/category/view/home_category.dart';
 
@@ -57,19 +58,21 @@ final categoryProductsProvider = AsyncNotifierProvider.autoDispose
       CategoryProductsNotifier.new,
     );
 
-enum SortOption { none, priceLowHigh, priceHighLow, newest }
+enum SortOption { none, priceLowHigh, priceHighLow, newest, brand }
 
 class _FilterState {
   final String searchQuery;
   final RangeValues priceRange;
   final SortOption sortOption;
   final String? selectedSubCategoryId;
+  final String? selectedBrandId;
 
   const _FilterState({
     this.searchQuery = '',
     this.priceRange = const RangeValues(0, 100000),
     this.sortOption = SortOption.none,
     this.selectedSubCategoryId,
+    this.selectedBrandId,
   });
 
   _FilterState copyWith({
@@ -77,7 +80,9 @@ class _FilterState {
     RangeValues? priceRange,
     SortOption? sortOption,
     String? selectedSubCategoryId,
+    String? selectedBrandId,
     bool clearSubCategory = false,
+    bool clearBrand = false,
   }) {
     return _FilterState(
       searchQuery: searchQuery ?? this.searchQuery,
@@ -86,6 +91,9 @@ class _FilterState {
       selectedSubCategoryId: clearSubCategory
           ? null
           : (selectedSubCategoryId ?? this.selectedSubCategoryId),
+      selectedBrandId: clearBrand
+          ? null
+          : (selectedBrandId ?? this.selectedBrandId),
     );
   }
 }
@@ -101,6 +109,10 @@ class _FilterNotifier extends StateNotifier<_FilterState> {
   void setSubCategory(String? id) => state = state.copyWith(
     selectedSubCategoryId: id,
     clearSubCategory: id == null,
+  );
+  void setBrand(String? id) => state = state.copyWith(
+    selectedBrandId: id,
+    clearBrand: id == null,
   );
   void reset(double maxPrice) =>
       state = _FilterState(priceRange: RangeValues(0, maxPrice));
@@ -129,7 +141,14 @@ final _filteredProductsProvider = Provider.autoDispose
             filter.selectedSubCategoryId == null ||
             p.subCategoryId == filter.selectedSubCategoryId;
 
-        return matchesSearch && matchesPrice && matchesSubCategory;
+        final matchesBrand =
+            filter.selectedBrandId == null ||
+            p.brandId == filter.selectedBrandId;
+
+        return matchesSearch &&
+            matchesPrice &&
+            matchesSubCategory &&
+            matchesBrand;
       }).toList();
 
       switch (filter.sortOption) {
@@ -141,6 +160,13 @@ final _filteredProductsProvider = Provider.autoDispose
           break;
         case SortOption.newest:
           result.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+          break;
+        case SortOption.brand:
+          result.sort(
+            (a, b) => (a.brandName ?? '~').toLowerCase().compareTo(
+              (b.brandName ?? '~').toLowerCase(),
+            ),
+          );
           break;
         case SortOption.none:
           break;
@@ -255,6 +281,7 @@ class CategoryProductsView extends ConsumerWidget {
     final subCategoriesAsync = ref.watch(
       subCategoriesProvider(currentCategory.id),
     );
+    final brandsAsync = ref.watch(brandsByCategoryProvider(currentCategory.id));
 
     return Drawer(
       backgroundColor: AppColors.primaryDark,
@@ -287,6 +314,37 @@ class CategoryProductsView extends ConsumerWidget {
             error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(height: 24),
+          brandsAsync.when(
+            data: (brands) {
+              if (brands.isEmpty) return const SizedBox.shrink();
+              final options = brands
+                  .map((b) => DropdownOption(id: b.id, label: b.name))
+                  .toList();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilterDropdownField(
+                    label: 'BRAND',
+                    hintText: 'All brands',
+                    prefixIcon: Icons.local_offer_outlined,
+                    options: options,
+                    selectedId: filter.selectedBrandId,
+                    onSelected: (id) {
+                      ref.read(_filterProvider.notifier).setBrand(id);
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.accentGold),
+              ),
+            ),
+            error: (_, _) => const SizedBox.shrink(),
+          ),
           FilterDropdownField(
             label: 'SORT BY',
             hintText: 'Default',
@@ -295,6 +353,7 @@ class CategoryProductsView extends ConsumerWidget {
               DropdownOption(id: 'priceLowHigh', label: 'Price: Low to High'),
               DropdownOption(id: 'priceHighLow', label: 'Price: High to Low'),
               DropdownOption(id: 'newest', label: 'Newest First'),
+              DropdownOption(id: 'brand', label: 'Brand (A–Z)'),
             ],
             selectedId: filter.sortOption == SortOption.none
                 ? null
@@ -417,7 +476,8 @@ class _ProductListBodyState extends ConsumerState<_ProductListBody> {
         filter.priceRange.start > 0 ||
         filter.priceRange.end < widget.maxPrice ||
         filter.sortOption != SortOption.none ||
-        filter.selectedSubCategoryId != null;
+        filter.selectedSubCategoryId != null ||
+        filter.selectedBrandId != null;
 
     return Column(
       children: [

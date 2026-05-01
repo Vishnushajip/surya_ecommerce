@@ -24,6 +24,9 @@ class ProductModel {
   final String? gst;
   final String? bldc;
   final double? mrp;
+  final String? itemCode;
+  final String? brandId;
+  final String? brandName;
 
   const ProductModel({
     required this.id,
@@ -49,6 +52,9 @@ class ProductModel {
     this.gst,
     this.bldc,
     this.mrp,
+    this.itemCode,
+    this.brandId,
+    this.brandName,
   });
 
   factory ProductModel.fromFirestore(DocumentSnapshot doc) {
@@ -82,6 +88,9 @@ class ProductModel {
       gst: data['gst'],
       bldc: data['bldc'],
       mrp: (data['mrp'] ?? 0).toDouble(),
+      itemCode: data['itemCode'],
+      brandId: data['brandId'],
+      brandName: data['brandName'],
     );
   }
 
@@ -121,6 +130,9 @@ class ProductModel {
       gst: json['gst'] as String?,
       bldc: json['bldc'] as String?,
       mrp: (json['mrp'] as num?)?.toDouble(),
+      itemCode: json['itemCode'] as String?,
+      brandId: json['brandId'] as String?,
+      brandName: json['brandName'] as String?,
     );
   }
 
@@ -148,6 +160,9 @@ class ProductModel {
       if (gst != null) 'gst': gst,
       if (bldc != null) 'bldc': bldc,
       if (mrp != null) 'mrp': mrp,
+      if (itemCode != null) 'itemCode': itemCode,
+      if (brandId != null) 'brandId': brandId,
+      if (brandName != null) 'brandName': brandName,
     };
   }
 
@@ -159,6 +174,9 @@ class ProductModel {
     String? gst,
     String? bldc,
     double? mrp,
+    String? itemCode,
+    String? brandId,
+    String? brandName,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -183,6 +201,9 @@ class ProductModel {
       gst: gst ?? this.gst,
       bldc: bldc ?? this.bldc,
       mrp: mrp ?? this.mrp,
+      itemCode: itemCode ?? this.itemCode,
+      brandId: brandId ?? this.brandId,
+      brandName: brandName ?? this.brandName,
     );
   }
 
@@ -219,6 +240,9 @@ class ProductModel {
       'gst': gst,
       'bldc': bldc,
       'mrp': mrp,
+      'itemCode': itemCode,
+      'brandId': brandId,
+      'brandName': brandName,
       'formattedPrice': formattedPrice,
       'formattedRating': formattedRating,
       'hasImages': hasImages,
