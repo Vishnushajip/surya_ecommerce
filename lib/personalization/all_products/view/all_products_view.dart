@@ -635,16 +635,3 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-enum ProductSort {
-  newest('Newest First', 'createdDate', true),
-  oldest('Oldest First', 'createdDate', false),
-  priceLow('Price: Low to High', 'price', false),
-  priceHigh('Price: High to Low', 'price', true),
-  rating('Top Rated', 'ratingAverage', true),
-  brand('Brand (A–Z)', 'brandName', false);
-
-  final String label;
-  final String field;
-  final bool descending;
-  const ProductSort(this.label, this.field, this.descending);
-}

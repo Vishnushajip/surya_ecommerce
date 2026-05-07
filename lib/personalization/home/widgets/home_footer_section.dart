@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 import 'package:surya_ecommerce/core/theme/app_colors.dart';
 
 class SunAssociatesFooter extends StatelessWidget {
@@ -185,12 +186,13 @@ class _BrandColumn extends StatelessWidget {
 // ─── Navigation Column ───────────────────────────────────────────────────────
 
 class _NavigationColumn extends StatelessWidget {
-  final List<String> _links = const [
-    'Home',
-    'About Us',
-    'Products',
-    'Services',
-    'Contact Us',
+  final List<({String label, String route})> _links = const [
+    (label: 'Home', route: '/'),
+    (label: 'About Us', route: '/about'),
+    (label: 'Products', route: '/products'),
+    (label: 'Brands', route: '/brands'),
+    (label: 'Contact Us', route: '/contact'),
+    (label: 'Complaints', route: '/complaint'),
   ];
 
   @override
@@ -204,7 +206,10 @@ class _NavigationColumn extends StatelessWidget {
         ..._links.map(
           (link) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _FooterNavLink(label: link),
+            child: _FooterNavLink(
+              label: link.label,
+              onTap: () => context.go(link.route),
+            ),
           ),
         ),
       ],
@@ -276,7 +281,8 @@ class _SectionHeading extends StatelessWidget {
 
 class _FooterNavLink extends StatefulWidget {
   final String label;
-  const _FooterNavLink({required this.label});
+  final VoidCallback onTap;
+  const _FooterNavLink({required this.label, required this.onTap});
 
   @override
   State<_FooterNavLink> createState() => _FooterNavLinkState();
@@ -290,14 +296,17 @@ class _FooterNavLinkState extends State<_FooterNavLink> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedDefaultTextStyle(
-        duration: const Duration(milliseconds: 200),
-        style: GoogleFonts.outfit(
-          color: _hovered ? AppColors.accentGold : AppColors.textSecondary,
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 200),
+          style: GoogleFonts.outfit(
+            color: _hovered ? AppColors.accentGold : AppColors.textSecondary,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          child: Text(widget.label),
         ),
-        child: Text(widget.label),
       ),
     );
   }

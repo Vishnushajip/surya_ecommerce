@@ -12,6 +12,7 @@ import '../../reviews/widgets/review_prompt_widget.dart';
 import '../widgets/hero_section.dart';
 import '../widgets/Featured_screen.dart';
 import '../widgets/home_testimonials_section.dart';
+import '../../brand/widgets/shop_by_brand_widget.dart';
 import '../../../core/utils/user_utils.dart';
 
 class HomeView extends ConsumerStatefulWidget {
@@ -59,6 +60,7 @@ class _HomeViewState extends ConsumerState<HomeView>
             const HomeHeroSection(),
             const ReviewPromptWidget(),
             const ShopByCategoryWidget(),
+            const ShopByBrandWidget(),
             HomeAboutSection(),
             const FeaturedSection(),
             const ContactUsView(isInline: true),

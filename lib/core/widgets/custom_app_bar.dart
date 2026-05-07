@@ -60,7 +60,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 if (showBackButton)
                   _AppBarIconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: onBackPressed ?? () => Navigator.of(context).pop(),
+                    onTap: onBackPressed ?? () => context.pop(),
                   )
                 else
                   _AppBarIconButton(
@@ -248,7 +248,9 @@ class _NavBottomSheet extends StatelessWidget {
     (icon: Icons.home_rounded, label: 'Home', route: '/'),
     (icon: Icons.info_outline_rounded, label: 'About', route: '/about'),
     (icon: Icons.inventory_2_outlined, label: 'Products', route: '/products'),
+    (icon: Icons.business_rounded, label: 'Brands', route: '/brands'),
     (icon: Icons.mail_outline_rounded, label: 'Contact', route: '/contact'),
+    (icon: Icons.report_problem_outlined, label: 'Complaint', route: '/complaint'),
   ];
 
   @override

@@ -122,7 +122,7 @@ class ProductRepository {
       final querySnapshot = await _firestore
           .collection(AppConstants.productsCollection)
           .where('isActive', isEqualTo: true)
-          .orderBy('ratingAverage', descending: true)
+          .orderBy('listedDate', descending: true)
           .limit(limit)
           .get();
 
@@ -381,7 +381,7 @@ class ProductRepository {
         .collection(AppConstants.productsCollection)
         .where('isActive', isEqualTo: true)
         .where('featured', isEqualTo: true)
-        .orderBy('ratingAverage', descending: true)
+        .orderBy('listedDate', descending: true)
         .limit(limit)
         .snapshots()
         .map(

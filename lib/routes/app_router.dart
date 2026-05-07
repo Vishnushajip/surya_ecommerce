@@ -12,6 +12,8 @@ import '../personalization/contact_us/view/contact_us_view.dart';
 import '../personalization/category/view/category_products_view.dart';
 import '../personalization/category/view/all_categories_view.dart';
 import '../personalization/category/view/home_category.dart';
+import '../personalization/brand/view/brands_view.dart';
+import '../personalization/complaints/view/complaint_form_view.dart';
 import '../core/widgets/not_found_view.dart';
 
 import '../personalization/cart/widgets/floating_cart_sheet.dart';
@@ -153,6 +155,22 @@ class AppRouter {
             pageBuilder: (context, state) => const MaterialPage(
               key: ValueKey('all_categories'),
               child: AllCategoriesView(),
+            ),
+          ),
+          GoRoute(
+            path: '/brands',
+            name: 'brands',
+            pageBuilder: (context, state) => const MaterialPage(
+              key: ValueKey('brands'),
+              child: BrandsView(),
+            ),
+          ),
+          GoRoute(
+            path: '/complaint',
+            name: 'complaint',
+            pageBuilder: (context, state) => const MaterialPage(
+              key: ValueKey('complaint'),
+              child: ComplaintFormView(),
             ),
           ),
         ],
