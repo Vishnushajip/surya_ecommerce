@@ -99,8 +99,7 @@ class _ContactUsViewState extends ConsumerState<ContactUsView> {
                       icon: Icons.phone,
                       title: 'Call Us',
                       content: AppConstants.companyPhone,
-                      onTap: () =>
-                          _launchUrl('tel:${AppConstants.companyPhone}'),
+                      onTap: () => _launchUrl('tel:9846203813'),
                     ),
                     const SizedBox(height: 14),
                     _buildInfoCard(
@@ -128,8 +127,7 @@ class _ContactUsViewState extends ConsumerState<ContactUsView> {
                         icon: Icons.phone,
                         title: 'Call Us',
                         content: AppConstants.companyPhone,
-                        onTap: () =>
-                            _launchUrl('tel:${AppConstants.companyPhone}'),
+                        onTap: () => _launchUrl('tel:9846203815'),
                       ),
                     ),
                     const SizedBox(width: 16),

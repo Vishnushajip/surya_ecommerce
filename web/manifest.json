@@ -1,11 +1,11 @@
 {
-    "name": "Surya Associates",
-    "short_name": "Surya Associates",
+    "name": "Sun Associates",
+    "short_name": "Sun Associates",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#021B1E",
     "theme_color": "#021B1E",
-    "description": "Surya Associates — premium electrical & hardware products in Atholi, Kozhikode.",
+    "description": "Sun Associates — premium electrical & hardware products in Atholi, Kozhikode.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
