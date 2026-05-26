@@ -98,8 +98,8 @@ class _ContactUsViewState extends ConsumerState<ContactUsView> {
                     _buildInfoCard(
                       icon: Icons.phone,
                       title: 'Call Us',
-                      content: AppConstants.companyPhone,
-                      onTap: () => _launchUrl('tel:9846203813'),
+                      content: '+91 98462 03815',
+                      onTap: () => _launchUrl('tel:9846203815'),
                     ),
                     const SizedBox(height: 14),
                     _buildInfoCard(

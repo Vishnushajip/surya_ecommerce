@@ -58,9 +58,9 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
   }
 
   void _openShareSheet(ProductModel product) {
-    final shareUrl = kIsWeb
-        ? Uri.base.toString()
-        : '${Uri.base.origin}/products/${product.id}';
+    final shareUrl =
+        'https://sunassociates.web.app/share/product/${product.id}';
+    // final shareUrl =  'https://sunassociates.web.app/products/${product.id}';
     final shareText =
         '${product.productName} - ₹${product.price.toStringAsFixed(0)}';
 
@@ -441,7 +441,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
           ),
         ),
         const SizedBox(height: 8),
-        _buildItemCode(product.itemCode?? "N/A"),
+        _buildItemCode(product.itemCode ?? "N/A"),
         const SizedBox(height: 8),
         Row(
           children: [
