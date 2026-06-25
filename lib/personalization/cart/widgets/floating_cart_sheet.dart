@@ -63,7 +63,7 @@ class FloatingCartSheet extends ConsumerWidget {
         border: Border.all(color: AppColors.borderSoft, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),

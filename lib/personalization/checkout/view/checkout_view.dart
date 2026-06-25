@@ -91,6 +91,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
         quantity: item.quantity,
         unitPrice: item.product.price,
         totalPrice: item.totalPrice,
+        itemCode: item.product.itemCode ?? '',
       )).toList();
 
       final order = OrderModel(
@@ -398,7 +399,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: GoogleFonts.outfit(
-            color: AppColors.softGrey.withOpacity(0.5),
+            color: AppColors.softGrey.withValues(alpha: 0.5),
           ),
           prefixIcon: Icon(icon, color: AppColors.accentGold, size: 20),
           border: InputBorder.none,
@@ -471,7 +472,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.accentGold.withOpacity(0.2)),
+        border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -527,7 +528,7 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF25D366),
             foregroundColor: Colors.white,
-            disabledBackgroundColor: const Color(0xFF25D366).withOpacity(0.5),
+            disabledBackgroundColor: const Color(0xFF25D366).withValues(alpha: 0.5),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),

@@ -79,7 +79,7 @@ class SubCategoriesView extends ConsumerWidget {
                           children: [
                             Icon(
                               Icons.category_outlined,
-                              color: AppColors.softGrey.withOpacity(0.5),
+                              color: AppColors.softGrey.withValues(alpha: 0.5),
                               size: 64,
                             ),
                             const SizedBox(height: 16),
@@ -143,7 +143,7 @@ class _SearchAndSortBar extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppColors.cardDark,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSoft.withOpacity(0.2)),
+                border: Border.all(color: AppColors.borderSoft.withValues(alpha: 0.2)),
               ),
               child: TextField(
                 onChanged: (val) =>
@@ -156,13 +156,13 @@ class _SearchAndSortBar extends ConsumerWidget {
                 decoration: InputDecoration(
                   hintText: 'Search sub-categories...',
                   hintStyle: GoogleFonts.outfit(
-                    color: AppColors.softGrey.withOpacity(0.5),
+                    color: AppColors.softGrey.withValues(alpha: 0.5),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                   prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: AppColors.softGrey.withOpacity(0.5),
+                    color: AppColors.softGrey.withValues(alpha: 0.5),
                     size: 20,
                   ),
                   border: InputBorder.none,
@@ -190,7 +190,7 @@ class _SortDropdown extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSoft.withOpacity(0.2)),
+        border: Border.all(color: AppColors.borderSoft.withValues(alpha: 0.2)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -246,7 +246,7 @@ class _SubCategoryCard extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: AppColors.cardDark,
-          border: Border.all(color: AppColors.borderSoft.withOpacity(0.1)),
+          border: Border.all(color: AppColors.borderSoft.withValues(alpha: 0.1)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -257,7 +257,7 @@ class _SubCategoryCard extends ConsumerWidget {
                 AspectRatio(
                   aspectRatio: 1,
                   child: Container(
-                    color: AppColors.borderSoft.withOpacity(0.08),
+                    color: AppColors.borderSoft.withValues(alpha: 0.08),
                     child: subCategory.imageUrl.isNotEmpty
                         ? Image.network(
                             subCategory.imageUrl,

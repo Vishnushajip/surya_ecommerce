@@ -42,7 +42,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
           end: Alignment.bottomCenter,
           colors: [
             AppColors.primaryDark,
-            AppColors.primaryDark.withOpacity(0.5),
+            AppColors.primaryDark.withValues(alpha: 0.5),
             Colors.transparent,
           ],
           stops: const [0.0, 0.6, 1.0],
@@ -149,8 +149,8 @@ class _AppBarIconButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        splashColor: AppColors.accentGold.withOpacity(0.12),
-        highlightColor: AppColors.accentGold.withOpacity(0.06),
+        splashColor: AppColors.accentGold.withValues(alpha: 0.12),
+        highlightColor: AppColors.accentGold.withValues(alpha: 0.06),
         child: SizedBox(
           width: 40,
           height: 40,
@@ -249,6 +249,7 @@ class _NavBottomSheet extends StatelessWidget {
     (icon: Icons.info_outline_rounded, label: 'About', route: '/about'),
     (icon: Icons.inventory_2_outlined, label: 'Products', route: '/products'),
     (icon: Icons.business_rounded, label: 'Brands', route: '/brands'),
+    (icon: Icons.receipt_long_rounded, label: 'Orders', route: '/orders'),
     (icon: Icons.mail_outline_rounded, label: 'Contact', route: '/contact'),
     (icon: Icons.report_problem_outlined, label: 'Complaint', route: '/complaint'),
   ];
@@ -326,7 +327,7 @@ class _NavTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        splashColor: AppColors.accentGold.withOpacity(0.08),
+        splashColor: AppColors.accentGold.withValues(alpha: 0.08),
         highlightColor: Colors.transparent,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),

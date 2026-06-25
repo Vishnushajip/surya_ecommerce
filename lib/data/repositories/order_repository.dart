@@ -19,4 +19,22 @@ class OrderRepository {
       throw Exception('Failed to save order to Firestore: $e');
     }
   }
+
+  Future<List<OrderModel>> getOrdersByPhone(String phone) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('orders')
+          .where('phone', isEqualTo: phone)
+          .get();
+
+      final orders = querySnapshot.docs
+          .map((doc) => OrderModel.fromJson(doc.data()))
+          .toList();
+          
+      orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return orders;
+    } catch (e) {
+      throw Exception('Failed to fetch orders by phone: $e');
+    }
+  }
 }

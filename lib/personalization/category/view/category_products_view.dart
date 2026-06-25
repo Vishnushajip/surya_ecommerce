@@ -216,7 +216,7 @@ class CategoryProductsView extends ConsumerWidget {
                   children: [
                     Icon(
                       Icons.inventory_2_outlined,
-                      color: AppColors.softGrey.withOpacity(0.5),
+                      color: AppColors.softGrey.withValues(alpha: 0.5),
                       size: 80,
                     ),
                     const SizedBox(height: 24),

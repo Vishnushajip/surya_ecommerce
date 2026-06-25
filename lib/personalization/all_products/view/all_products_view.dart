@@ -345,7 +345,7 @@ class _AllProductsViewState extends ConsumerState<AllProductsView> {
                     color: AppColors.cardDark,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.borderSoft.withOpacity(0.3),
+                      color: AppColors.borderSoft.withValues(alpha: 0.3),
                     ),
                   ),
                   child: const Icon(

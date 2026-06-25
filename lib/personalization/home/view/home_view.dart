@@ -10,7 +10,7 @@ import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../reviews/widgets/review_prompt_widget.dart';
 import '../widgets/hero_section.dart';
-import '../widgets/Featured_screen.dart';
+import '../widgets/featured_screen.dart';
 import '../widgets/home_testimonials_section.dart';
 import '../../brand/widgets/shop_by_brand_widget.dart';
 import '../../../core/utils/user_utils.dart';

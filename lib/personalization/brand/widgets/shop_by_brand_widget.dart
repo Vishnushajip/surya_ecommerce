@@ -91,7 +91,7 @@ class ShopByBrandWidget extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: AppColors.cardDark,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.borderSoft.withOpacity(0.2)),
+                          border: Border.all(color: AppColors.borderSoft.withValues(alpha: 0.2)),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,

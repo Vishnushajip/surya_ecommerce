@@ -79,7 +79,7 @@ class CartView extends ConsumerWidget {
         children: [
           Icon(
             Icons.shopping_bag_outlined,
-            color: AppColors.accentGold.withOpacity(0.2),
+            color: AppColors.accentGold.withValues(alpha: 0.2),
             size: 100,
           ),
           const SizedBox(height: 20),

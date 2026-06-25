@@ -479,7 +479,7 @@ class _ComplaintFormViewState extends ConsumerState<ComplaintFormView> {
       color: AppColors.cardDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.borderSoft.withOpacity(0.5)),
+        side: BorderSide(color: AppColors.borderSoft.withValues(alpha: 0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -700,7 +700,7 @@ class _ComplaintFormViewState extends ConsumerState<ComplaintFormView> {
               ),
               borderRadius: BorderRadius.circular(12),
               color: file != null
-                  ? AppColors.accentGold.withOpacity(0.05)
+                  ? AppColors.accentGold.withValues(alpha: 0.05)
                   : Colors.transparent,
             ),
             child: Column(

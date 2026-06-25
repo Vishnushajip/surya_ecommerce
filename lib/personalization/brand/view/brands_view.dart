@@ -88,10 +88,10 @@ class _BrandCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.cardDark,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderSoft.withOpacity(0.3)),
+          border: Border.all(color: AppColors.borderSoft.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -119,7 +119,7 @@ class _BrandCard extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.accentGold.withOpacity(0.1),
+                  color: AppColors.accentGold.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                 ),
                 alignment: Alignment.center,

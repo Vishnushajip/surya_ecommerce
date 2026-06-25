@@ -62,7 +62,7 @@ class AllCategoriesView extends ConsumerWidget {
                         AspectRatio(
                           aspectRatio: 1,
                           child: Container(
-                            color: AppColors.borderSoft.withOpacity(0.1),
+                            color: AppColors.borderSoft.withValues(alpha: 0.1),
                             child: category.imageUrl.isNotEmpty
                                 ? Image.network(
                                     category.imageUrl,

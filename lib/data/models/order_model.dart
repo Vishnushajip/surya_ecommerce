@@ -59,8 +59,11 @@ class OrderModel {
       deliveryCharge: (json['deliveryCharge'] ?? 0.0).toDouble(),
       tax: (json['tax'] ?? 0.0).toDouble(),
       grandTotal: (json['grandTotal'] ?? 0.0).toDouble(),
-      products: (json['products'] as List<dynamic>?)
-              ?.map((e) => OrderProductModel.fromJson(e as Map<String, dynamic>))
+      products:
+          (json['products'] as List<dynamic>?)
+              ?.map(
+                (e) => OrderProductModel.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );
@@ -136,6 +139,7 @@ class OrderProductModel {
   final int quantity;
   final double unitPrice;
   final double totalPrice;
+  final String itemCode;
 
   OrderProductModel({
     required this.productId,
@@ -144,6 +148,7 @@ class OrderProductModel {
     required this.quantity,
     required this.unitPrice,
     required this.totalPrice,
+    required this.itemCode,
   });
 
   factory OrderProductModel.fromJson(Map<String, dynamic> json) {
@@ -154,6 +159,7 @@ class OrderProductModel {
       quantity: json['quantity'] ?? 1,
       unitPrice: (json['unitPrice'] ?? 0.0).toDouble(),
       totalPrice: (json['totalPrice'] ?? 0.0).toDouble(),
+      itemCode: json['itemCode'] ?? '',
     );
   }
 
@@ -165,6 +171,7 @@ class OrderProductModel {
       'quantity': quantity,
       'unitPrice': unitPrice,
       'totalPrice': totalPrice,
+      'itemCode': itemCode,
     };
   }
 }

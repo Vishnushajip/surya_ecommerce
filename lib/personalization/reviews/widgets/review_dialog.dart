@@ -147,7 +147,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
           border: Border.all(color: AppColors.borderSoft),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               blurRadius: 20,
               spreadRadius: 5,
             ),
@@ -207,7 +207,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Enter your name...',
-                        hintStyle: TextStyle(color: AppColors.softGrey.withOpacity(0.5)),
+                        hintStyle: TextStyle(color: AppColors.softGrey.withValues(alpha: 0.5)),
                         filled: true,
                         fillColor: AppColors.cardDark,
                         border: OutlineInputBorder(
@@ -241,7 +241,7 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Share your thoughts about your purchase...',
-                        hintStyle: TextStyle(color: AppColors.softGrey.withOpacity(0.5)),
+                        hintStyle: TextStyle(color: AppColors.softGrey.withValues(alpha: 0.5)),
                         filled: true,
                         fillColor: AppColors.cardDark,
                         border: OutlineInputBorder(
@@ -360,9 +360,9 @@ class _ReviewDialogState extends ConsumerState<ReviewDialog> {
             style: const TextStyle(color: Colors.white, fontSize: 13),
             decoration: InputDecoration(
               hintText: 'e.g. Good quality, reasonable price...',
-              hintStyle: TextStyle(color: AppColors.softGrey.withOpacity(0.3), fontSize: 13),
+              hintStyle: TextStyle(color: AppColors.softGrey.withValues(alpha: 0.3), fontSize: 13),
               filled: true,
-              fillColor: AppColors.primaryDark.withOpacity(0.5),
+              fillColor: AppColors.primaryDark.withValues(alpha: 0.5),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,

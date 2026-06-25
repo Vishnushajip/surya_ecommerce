@@ -134,10 +134,10 @@ class UserUtils {
                 decoration: InputDecoration(
                   hintText: 'Enter your name',
                   hintStyle: GoogleFonts.outfit(
-                    color: AppColors.softGrey.withOpacity(0.5),
+                    color: AppColors.softGrey.withValues(alpha: 0.5),
                   ),
                   filled: true,
-                  fillColor: AppColors.primaryDark.withOpacity(0.3),
+                  fillColor: AppColors.primaryDark.withValues(alpha: 0.3),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -145,13 +145,13 @@ class UserUtils {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: AppColors.borderSoft.withOpacity(0.3),
+                      color: AppColors.borderSoft.withValues(alpha: 0.3),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: AppColors.borderSoft.withOpacity(0.3),
+                      color: AppColors.borderSoft.withValues(alpha: 0.3),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -187,10 +187,10 @@ class UserUtils {
                 decoration: InputDecoration(
                   hintText: 'Enter 10-digit phone number',
                   hintStyle: GoogleFonts.outfit(
-                    color: AppColors.softGrey.withOpacity(0.5),
+                    color: AppColors.softGrey.withValues(alpha: 0.5),
                   ),
                   filled: true,
-                  fillColor: AppColors.primaryDark.withOpacity(0.3),
+                  fillColor: AppColors.primaryDark.withValues(alpha: 0.3),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -198,13 +198,13 @@ class UserUtils {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: AppColors.borderSoft.withOpacity(0.3),
+                      color: AppColors.borderSoft.withValues(alpha: 0.3),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: AppColors.borderSoft.withOpacity(0.3),
+                      color: AppColors.borderSoft.withValues(alpha: 0.3),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(

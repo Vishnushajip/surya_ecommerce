@@ -390,10 +390,10 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.accentGold.withOpacity(0.1),
+                color: AppColors.accentGold.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.accentGold.withOpacity(0.3),
+                  color: AppColors.accentGold.withValues(alpha: 0.3),
                 ),
               ),
               child: Text(
@@ -413,9 +413,9 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   product.bldc!,
@@ -670,7 +670,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
       decoration: BoxDecoration(
         color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.softGrey.withOpacity(0.2)),
+        border: Border.all(color: AppColors.softGrey.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

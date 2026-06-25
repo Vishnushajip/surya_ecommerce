@@ -1,46 +1,54 @@
 import 'dart:typed_data';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import '../../data/models/order_model.dart';
 
 class PdfInvoiceService {
+  static pw.MemoryImage? _logoImage;
+
+  static Future<void> _loadLogo() async {
+    if (_logoImage != null) return;
+    try {
+      final data = await rootBundle.load('assets/images/logo_bg_removed.png');
+      _logoImage = pw.MemoryImage(data.buffer.asUint8List());
+    } catch (_) {}
+  }
+
+  /// Pre-cache the logo asset when the orders screen opens.
+  static void preWarm() => _loadLogo();
+
   static Future<Uint8List> generateInvoice(OrderModel order) async {
+    await _loadLogo();
+
+    // Built-in PDF fonts — zero network cost, instant.
+    final font = pw.Font.helvetica();
+    final fontBold = pw.Font.helveticaBold();
+
     final pdf = pw.Document();
-
-    final font = await PdfGoogleFonts.robotoRegular().timeout(
-      const Duration(seconds: 5),
-    );
-    final fontBold = await PdfGoogleFonts.robotoBold().timeout(
-      const Duration(seconds: 5),
-    );
-
-    final theme = pw.ThemeData.withFont(base: font, bold: fontBold);
-
-    final productTable = await _buildProductTable(order);
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
-        theme: theme,
-        build: (pw.Context context) {
-          return [
-            _buildHeader(order),
-            pw.SizedBox(height: 20),
-            _buildCustomerDetails(order),
-            pw.SizedBox(height: 20),
-            productTable,
-            pw.SizedBox(height: 20),
-            _buildSummary(order),
-            pw.SizedBox(height: 40),
-            _buildFooter(),
-          ];
-        },
+        theme: pw.ThemeData.withFont(base: font, bold: fontBold),
+        build: (pw.Context context) => [
+          _buildHeader(order),
+          pw.SizedBox(height: 20),
+          _buildCustomerDetails(order),
+          pw.SizedBox(height: 20),
+          _buildProductTable(order),
+          pw.SizedBox(height: 20),
+          _buildSummary(order),
+          pw.SizedBox(height: 40),
+          _buildFooter(),
+        ],
       ),
     );
 
+    // Yield so Flutter's frame pipeline can finish before the heavy save().
+    await Future.delayed(Duration.zero);
     return pdf.save();
   }
 
@@ -52,21 +60,32 @@ class PdfInvoiceService {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+            pw.Row(
               children: [
-                pw.Text(
-                  'Sun Associates',
-                  style: pw.TextStyle(
-                    fontSize: 28,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.blue900,
-                  ),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'Order Invoice',
-                  style: pw.TextStyle(fontSize: 18, color: PdfColors.grey700),
+                if (_logoImage != null) ...[
+                  pw.Image(_logoImage!, height: 50),
+                  pw.SizedBox(width: 12),
+                ],
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Sun Associates',
+                      style: pw.TextStyle(
+                        fontSize: 28,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Order Invoice',
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -100,7 +119,7 @@ class PdfInvoiceService {
         ),
         pw.SizedBox(height: 8),
         pw.Text('Name: ${order.customerName}'),
-        pw.Text('Phone Number: ${order.phone}'),
+        pw.Text('Phone: ${order.phone}'),
         if (order.address.isNotEmpty) pw.Text('Address: ${order.address}'),
         if (order.city.isNotEmpty ||
             order.state.isNotEmpty ||
@@ -110,37 +129,26 @@ class PdfInvoiceService {
     );
   }
 
-  static Future<pw.Widget> _buildProductTable(OrderModel order) async {
-    final Map<String, pw.ImageProvider> imageMap = {};
-    for (final p in order.products) {
-      if (p.imageUrl.isNotEmpty && !imageMap.containsKey(p.imageUrl)) {
-        try {
-          final img = await networkImage(
-            p.imageUrl,
-          ).timeout(const Duration(seconds: 5));
-          imageMap[p.imageUrl] = img;
-        } catch (e) {}
-      }
-    }
-
+  static pw.Widget _buildProductTable(OrderModel order) {
     return pw.TableHelper.fromTextArray(
-      headers: [
-        'Image',
-        'Product Name',
-        'Product ID',
-        'Qty',
-        'Unit Price',
-        'Total',
-      ],
-      data: List<List<dynamic>>.generate(order.products.length, (index) {
-        final p = order.products[index];
+      headers: ['#', 'Product Name', 'Item Code', 'Qty', 'Price', 'Total'],
+      columnWidths: {
+        0: const pw.FixedColumnWidth(30),
+        1: const pw.FlexColumnWidth(4),
+        2: const pw.FlexColumnWidth(2),
+        3: const pw.FixedColumnWidth(40),
+        4: const pw.FixedColumnWidth(80),
+        5: const pw.FixedColumnWidth(80),
+      },
+      data: List<List<dynamic>>.generate(order.products.length, (i) {
+        final p = order.products[i];
         return [
-          p.imageUrl,
+          '${i + 1}',
           p.productName,
-          p.productId,
-          p.quantity.toString(),
-          '₹${p.unitPrice.toStringAsFixed(2)}',
-          '₹${p.totalPrice.toStringAsFixed(2)}',
+          p.itemCode.isNotEmpty ? p.itemCode : '-',
+          '${p.quantity}',
+          'Rs.${p.unitPrice.toStringAsFixed(2)}',
+          'Rs.${p.totalPrice.toStringAsFixed(2)}',
         ];
       }),
       border: pw.TableBorder.all(color: PdfColors.grey300),
@@ -149,7 +157,6 @@ class PdfInvoiceService {
         color: PdfColors.white,
       ),
       headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
-      cellHeight: 50,
       cellAlignments: {
         0: pw.Alignment.center,
         1: pw.Alignment.centerLeft,
@@ -157,24 +164,6 @@ class PdfInvoiceService {
         3: pw.Alignment.center,
         4: pw.Alignment.centerRight,
         5: pw.Alignment.centerRight,
-      },
-      cellBuilder: (int columnIndex, dynamic cellValue, int rowIndex) {
-        if (columnIndex == 0 && rowIndex > 0) {
-          final imageUrl = cellValue as String;
-          if (imageUrl.isNotEmpty && imageMap.containsKey(imageUrl)) {
-            return pw.Container(
-              alignment: pw.Alignment.center,
-              padding: const pw.EdgeInsets.all(2),
-              child: pw.Image(imageMap[imageUrl]!, width: 40, height: 40),
-            );
-          } else {
-            return pw.Container(
-              alignment: pw.Alignment.center,
-              child: pw.Text('No Image', style: pw.TextStyle(fontSize: 8)),
-            );
-          }
-        }
-        return null;
       },
     );
   }
@@ -191,16 +180,12 @@ class PdfInvoiceService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _buildSummaryRow('Subtotal', order.subtotal),
-                _buildSummaryRow('Discount', order.discount),
-                _buildSummaryRow('Delivery Charge', order.deliveryCharge),
-                _buildSummaryRow('Tax', order.tax),
+                _summaryRow('Subtotal', order.subtotal),
+                _summaryRow('Discount', order.discount),
+                _summaryRow('Delivery Charge', order.deliveryCharge),
+                _summaryRow('Tax', order.tax),
                 pw.Divider(),
-                _buildSummaryRow(
-                  'Grand Total',
-                  order.grandTotal,
-                  isTotal: true,
-                ),
+                _summaryRow('Grand Total', order.grandTotal, isTotal: true),
               ],
             ),
           ),
@@ -209,11 +194,8 @@ class PdfInvoiceService {
     );
   }
 
-  static pw.Widget _buildSummaryRow(
-    String title,
-    double value, {
-    bool isTotal = false,
-  }) {
+  static pw.Widget _summaryRow(String title, double value,
+      {bool isTotal = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
@@ -227,7 +209,7 @@ class PdfInvoiceService {
             ),
           ),
           pw.Text(
-            '₹${value.toStringAsFixed(2)}',
+            'Rs.${value.toStringAsFixed(2)}',
             style: pw.TextStyle(
               fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
               fontSize: isTotal ? 14 : 12,
@@ -247,6 +229,17 @@ class PdfInvoiceService {
         pw.Text(
           'Thank you for shopping with Sun Associates.',
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          'Phone: 9846203815 | Website: https://sunassociates.web.app',
+          style: pw.TextStyle(fontSize: 12),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Text(
+          'This invoice is for reference only. The final payable amount may differ after verification.',
+          style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+          textAlign: pw.TextAlign.center,
         ),
       ],
     );

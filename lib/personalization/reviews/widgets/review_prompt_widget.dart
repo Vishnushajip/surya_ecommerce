@@ -130,13 +130,13 @@ class _ReviewPromptWidgetState extends ConsumerState<ReviewPromptWidget>
             border: Border.all(color: AppColors.borderSoft, width: 0.5),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accentGold.withOpacity(0.07),
+                color: AppColors.accentGold.withValues(alpha: 0.07),
                 blurRadius: 24,
                 spreadRadius: 2,
                 offset: const Offset(0, 6),
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -154,7 +154,7 @@ class _ReviewPromptWidgetState extends ConsumerState<ReviewPromptWidget>
                     height: 120,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.accentGold.withOpacity(0.05),
+                      color: AppColors.accentGold.withValues(alpha: 0.05),
                     ),
                   ),
                 ),
@@ -166,7 +166,7 @@ class _ReviewPromptWidgetState extends ConsumerState<ReviewPromptWidget>
                     height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.accentGold.withOpacity(0.04),
+                      color: AppColors.accentGold.withValues(alpha: 0.04),
                     ),
                   ),
                 ),
@@ -211,10 +211,10 @@ class _Header extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.accentGold.withOpacity(0.12),
+            color: AppColors.accentGold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.accentGold.withOpacity(0.25),
+              color: AppColors.accentGold.withValues(alpha: 0.25),
               width: 0.5,
             ),
           ),
@@ -255,7 +255,7 @@ class _Header extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: AppColors.borderSoft.withOpacity(0.5),
+              color: AppColors.borderSoft.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -356,7 +356,7 @@ class _ProductCard extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 2),
                         child: Icon(
                           Icons.star_border_rounded,
-                          color: AppColors.accentGold.withOpacity(0.6),
+                          color: AppColors.accentGold.withValues(alpha: 0.6),
                           size: 14,
                         ),
                       ),
@@ -366,7 +366,7 @@ class _ProductCard extends StatelessWidget {
                   Text(
                     'Tap to rate',
                     style: GoogleFonts.dmSans(
-                      color: AppColors.accentGold.withOpacity(0.65),
+                      color: AppColors.accentGold.withValues(alpha: 0.65),
                       fontSize: 10.5,
                       letterSpacing: 0.3,
                     ),
@@ -400,7 +400,7 @@ class _Actions extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accentGold.withOpacity(0.25),
+                    color: AppColors.accentGold.withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -427,7 +427,7 @@ class _Actions extends StatelessWidget {
             height: 44,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.borderSoft.withOpacity(0.4),
+              color: AppColors.borderSoft.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.borderSoft, width: 0.5),
             ),

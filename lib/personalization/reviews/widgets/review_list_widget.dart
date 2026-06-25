@@ -87,7 +87,7 @@ class _ReviewListWidgetState extends ConsumerState<ReviewListWidget> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: AppColors.accentGold.withOpacity(0.1),
+            color: AppColors.accentGold.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(

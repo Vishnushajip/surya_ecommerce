@@ -60,7 +60,7 @@ class SunAssociatesFooter extends StatelessWidget {
                   'DESIGNED FOR ARCHITECTURAL EXCELLENCE',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.outfit(
-                    color: AppColors.accentGold.withOpacity(0.6),
+                    color: AppColors.accentGold.withValues(alpha: 0.6),
                     fontSize: 9,
                     letterSpacing: 2.2,
                     fontWeight: FontWeight.w500,
@@ -372,7 +372,7 @@ class _SocialIconButtonState extends State<_SocialIconButton> {
           height: 38,
           decoration: BoxDecoration(
             color: _hovered
-                ? AppColors.accentGold.withOpacity(0.15)
+                ? AppColors.accentGold.withValues(alpha: 0.15)
                 : AppColors.cardDark,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
