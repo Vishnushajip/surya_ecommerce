@@ -193,6 +193,24 @@ class CachedNetworkImageWidget extends ConsumerWidget {
       return errorWidget ?? const Icon(Icons.broken_image);
     }
 
+    if (kIsWeb) {
+      return Image.network(
+        imageUrl,
+        fit: fit,
+        height: height,
+        width: width,
+        gaplessPlayback: true,
+        cacheHeight: _cacheDim(height),
+        cacheWidth: _cacheDim(width),
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return placeholder ?? const Center(child: CircularProgressIndicator());
+        },
+        errorBuilder: (_, _, _) =>
+            errorWidget ?? const Icon(Icons.broken_image),
+      );
+    }
+
     final asyncImage = ref.watch(cachedImageProvider(imageUrl));
 
     return asyncImage.when(

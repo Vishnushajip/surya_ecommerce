@@ -114,18 +114,21 @@ class _ReviewListWidgetState extends ConsumerState<ReviewListWidget> {
 
   Widget _buildHorizontalList(List<ReviewModel> reviews) {
     return SizedBox(
-      height: 200,
-      child: ListView.separated(
+      height: 216,
+      width: double.infinity,
+      child: SingleChildScrollView(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        itemCount: reviews.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 16),
-        itemBuilder: (context, index) {
-          return SizedBox(
-            width: 320,
-            child: _ReviewCard(review: reviews[index]),
-          );
-        },
+        clipBehavior: Clip.none,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (int i = 0; i < reviews.length; i++) ...[
+              SizedBox(width: 320, child: _ReviewCard(review: reviews[i])),
+              if (i < reviews.length - 1) const SizedBox(width: 16),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -160,7 +163,7 @@ class _ReviewCard extends StatelessWidget {
         border: Border.all(color: AppColors.borderSoft),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -214,7 +217,7 @@ class _ReviewCard extends StatelessWidget {
           Text(
             review.feedback,
             style: GoogleFonts.outfit(
-              color: AppColors.textWhite.withOpacity(0.8),
+              color: AppColors.textWhite.withValues(alpha: 0.8),
               height: 1.5,
               fontSize: 14,
             ),
@@ -232,9 +235,9 @@ class _ReviewCard extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.accentGold.withOpacity(0.1),
+        color: AppColors.accentGold.withValues(alpha: 0.1),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.accentGold.withOpacity(0.3)),
+        border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
       ),
       child: Center(
         child: Text(
