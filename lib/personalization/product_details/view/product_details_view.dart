@@ -58,9 +58,7 @@ class _ProductDetailsViewState extends ConsumerState<ProductDetailsView>
   }
 
   void _openShareSheet(ProductModel product) {
-    final shareUrl =
-        'https://sunassociates.web.app/share/product/${product.id}';
-    // final shareUrl =  'https://sunassociates.web.app/products/${product.id}';
+    final shareUrl =  'https://sunassociates.web.app/products/${product.id}';
     final shareText =
         '${product.productName} - ₹${product.price.toStringAsFixed(0)}';
 
