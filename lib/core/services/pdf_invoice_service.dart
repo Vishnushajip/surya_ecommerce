@@ -1,5 +1,7 @@
-import 'dart:typed_data';
+import 'dart:convert';
+import 'dart:js_interop';
 import 'package:flutter/services.dart';
+import 'package:web/web.dart' as web;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -7,6 +9,17 @@ import '../../data/models/order_model.dart';
 
 class PdfInvoiceService {
   static pw.MemoryImage? _logoImage;
+  static pw.MemoryImage? _malayalamImage;
+  static Future<void>? _warmFuture;
+
+  static const _malayalamDisclaimer =
+      'ഇവിടെ നൽകിയിരിക്കുന്ന തുക റഫറൻസിനായി മാത്രമാണ്. '
+      'അന്തിമ ബിൽ തയ്യാറാക്കിയ ശേഷം മാത്രമേ '
+      'യഥാർത്ഥ തുക സ്ഥിരീകരിക്കുകയുള്ളു.';
+
+  static Future<void> _doWarm() async {
+    await Future.wait([_loadLogo(), _renderMalayalamImage()]);
+  }
 
   static Future<void> _loadLogo() async {
     if (_logoImage != null) return;
@@ -16,18 +29,84 @@ class PdfInvoiceService {
     } catch (_) {}
   }
 
-  /// Pre-cache the logo asset when the orders screen opens.
-  static void preWarm() => _loadLogo();
+  /// Renders the Malayalam disclaimer using the browser's native canvas,
+  /// which has full complex-script / font-fallback support.
+  static Future<void> _renderMalayalamImage() async {
+    if (_malayalamImage != null) return;
+    try {
+      const double canvasW = 1400;
+      const double fontSize = 26;
+      const double lineHeight = 38;
+
+      // Measure pass — get actual line wraps
+      final measureCanvas = web.HTMLCanvasElement()
+        ..width = 1
+        ..height = 1;
+      final mCtx =
+          measureCanvas.getContext('2d') as web.CanvasRenderingContext2D
+            ..font = '${fontSize}px sans-serif';
+      final lines = _wrapLines(mCtx, _malayalamDisclaimer, canvasW - 40);
+
+      final canvasH = (lines.length * lineHeight + 24).ceil();
+
+      // Render pass
+      final canvas = web.HTMLCanvasElement()
+        ..width = canvasW.toInt()
+        ..height = canvasH;
+      final ctx =
+          canvas.getContext('2d') as web.CanvasRenderingContext2D
+            ..fillStyle = '#ffffff'.toJS
+            ..fillRect(0, 0, canvasW, canvasH.toDouble())
+            ..fillStyle = '#888888'.toJS
+            ..font = '${fontSize}px sans-serif'
+            ..textAlign = 'center';
+
+      var y = fontSize + 4;
+      for (final line in lines) {
+        ctx.fillText(line, canvasW / 2, y);
+        y += lineHeight;
+      }
+
+      final dataUrl = canvas.toDataURL('image/png');
+      final bytes = base64Decode(dataUrl.split(',').last);
+      _malayalamImage = pw.MemoryImage(bytes);
+    } catch (_) {}
+  }
+
+  static List<String> _wrapLines(
+    web.CanvasRenderingContext2D ctx,
+    String text,
+    double maxWidth,
+  ) {
+    final words = text.split(' ');
+    final lines = <String>[];
+    var current = '';
+    for (final word in words) {
+      final test = current.isEmpty ? word : '$current $word';
+      final w = ctx.measureText(test).width;
+      if (w > maxWidth && current.isNotEmpty) {
+        lines.add(current);
+        current = word;
+      } else {
+        current = test;
+      }
+    }
+    if (current.isNotEmpty) lines.add(current);
+    return lines;
+  }
+
+  static void preWarm() {
+    _warmFuture ??= _doWarm();
+  }
 
   static Future<Uint8List> generateInvoice(OrderModel order) async {
-    await _loadLogo();
+    _warmFuture ??= _doWarm();
+    await _warmFuture;
 
-    // Built-in PDF fonts — zero network cost, instant.
     final font = pw.Font.helvetica();
     final fontBold = pw.Font.helveticaBold();
 
     final pdf = pw.Document();
-
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -47,7 +126,6 @@ class PdfInvoiceService {
       ),
     );
 
-    // Yield so Flutter's frame pipeline can finish before the heavy save().
     await Future.delayed(Duration.zero);
     return pdf.save();
   }
@@ -144,7 +222,7 @@ class PdfInvoiceService {
         final p = order.products[i];
         return [
           '${i + 1}',
-          p.productName,
+          p.productName.replaceAll('–', '-').replaceAll('—', '-'),
           p.itemCode.isNotEmpty ? p.itemCode : '-',
           '${p.quantity}',
           'Rs.${p.unitPrice.toStringAsFixed(2)}',
@@ -235,9 +313,12 @@ class PdfInvoiceService {
           'Phone: 9846203815 | Website: https://sunassociates.web.app',
           style: pw.TextStyle(fontSize: 12),
         ),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 10),
+        if (_malayalamImage != null)
+          pw.Image(_malayalamImage!, width: 480),
+        pw.SizedBox(height: 4),
         pw.Text(
-          'This invoice is for reference only. The final payable amount may differ after verification.',
+          'This invoice is generated for reference purposes only. The displayed amount is not the final payable amount. The final invoice may differ after verification and billing adjustments.',
           style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
           textAlign: pw.TextAlign.center,
         ),

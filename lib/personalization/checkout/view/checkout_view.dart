@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:printing/printing.dart';
 import 'package:surya_ecommerce/core/widgets/custom_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +9,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/cart_model.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/repositories/order_repository.dart';
-import '../../../core/services/pdf_invoice_service.dart';
 import '../../cart/view_model/cart_view_model.dart';
 import '../../../routes/app_router.dart';
 
@@ -113,25 +111,18 @@ class _CheckoutViewState extends ConsumerState<CheckoutView>
         products: products,
       );
 
-      // Save order to Firestore
       await ref.read(orderRepositoryProvider).saveOrder(order);
 
-      // Track ordered status locally
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('orderDone', true);
       final productIds = cartSummary.items.map((e) => e.product.id).toList();
       await prefs.setStringList('orderedProductIds', productIds);
       await prefs.setInt('orderedTime', DateTime.now().millisecondsSinceEpoch);
 
-      // Generate PDF Invoice
-      final pdfBytes = await PdfInvoiceService.generateInvoice(order);
       
-      // Download / Share PDF on Web
-      Printing.sharePdf(bytes: pdfBytes, filename: 'invoice_$orderId.pdf');
 
-      // WhatsApp Message
       final message = _generateWhatsAppMessage(order);
-      const adminPhoneNumber = '919846203815'; // Change if needed
+      const adminPhoneNumber = '919846203815'; 
       final whatsappUrl = Uri.parse(
         'https://wa.me/$adminPhoneNumber?text=${Uri.encodeComponent(message)}',
       );

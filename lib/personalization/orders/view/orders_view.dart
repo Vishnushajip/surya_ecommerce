@@ -22,7 +22,7 @@ class _OrdersViewState extends ConsumerState<OrdersView> {
   @override
   void initState() {
     super.initState();
-    PdfInvoiceService.preWarm(); // start loading fonts immediately in background
+    PdfInvoiceService.preWarm(); 
     _loadPhoneNumber();
   }
 
@@ -54,9 +54,7 @@ class _OrdersViewState extends ConsumerState<OrdersView> {
       errorMsg = e.toString();
     }
 
-   
-    // showDialog uses rootNavigator:true by default; pop must match or it
-    // hits go_router's inner navigator and removes the orders route instead.
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
