@@ -20,13 +20,11 @@ class CacheService {
   static const _maxMemoryEntries = 100;
 
   final Map<String, Uint8List> _memoryCache = {};
-  // Dedupe concurrent requests for the same URL.
   final Map<String, Future<Uint8List?>> _inFlight = {};
   Database? _db;
 
   String _hash(String url) => sha1.convert(utf8.encode(url)).toString();
 
-  // ---- Web (IndexedDB) ----
   Future<Database?> _openDb() async {
     if (_db != null) return _db;
     try {
@@ -57,9 +55,14 @@ class CacheService {
       final store = txn.objectStore(_storeName);
       final val = await store.getObject(key);
       await txn.completed;
+      if (val == null) return null;
+      // Handle multiple possible return types from IndexedDB.
+      if (val is Uint8List) return val;
       if (val is List<int>) return Uint8List.fromList(val);
+      if (val is List) return Uint8List.fromList(val.cast<int>());
       return null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('IndexedDB read failed: $e');
       return null;
     }
   }
@@ -77,7 +80,6 @@ class CacheService {
     }
   }
 
-  // ---- Mobile/Desktop (filesystem) ----
   Future<File?> _localFile(String url) async {
     if (kIsWeb) return null;
     try {
@@ -90,7 +92,7 @@ class CacheService {
 
   void _putMemory(String url, Uint8List bytes) {
     if (_memoryCache.length >= _maxMemoryEntries) {
-      _memoryCache.remove(_memoryCache.keys.first); // simple FIFO eviction
+      _memoryCache.remove(_memoryCache.keys.first);
     }
     _memoryCache[url] = bytes;
   }
@@ -99,33 +101,40 @@ class CacheService {
     if (_memoryCache.containsKey(url)) {
       return Future.value(_memoryCache[url]);
     }
-    // Reuse in-flight request so the same image isn't fetched twice.
-    return _inFlight[url] ??= _load(url).whenComplete(() => _inFlight.remove(url));
+    return _inFlight[url] ??= _load(
+      url,
+    ).whenComplete(() => _inFlight.remove(url));
   }
 
   Future<Uint8List?> _load(String url) async {
     final key = _hash(url);
 
     // 1. Persistent cache
-    if (kIsWeb) {
-      final cached = await _readWeb(key);
-      if (cached != null) {
-        _putMemory(url, cached);
-        return cached;
+    try {
+      if (kIsWeb) {
+        final cached = await _readWeb(key);
+        if (cached != null && cached.isNotEmpty) {
+          _putMemory(url, cached);
+          return cached;
+        }
+      } else {
+        final file = await _localFile(url);
+        if (file != null && await file.exists()) {
+          final bytes = await file.readAsBytes();
+          if (bytes.isNotEmpty) {
+            _putMemory(url, bytes);
+            return bytes;
+          }
+        }
       }
-    } else {
-      final file = await _localFile(url);
-      if (file != null && await file.exists()) {
-        final bytes = await file.readAsBytes();
-        _putMemory(url, bytes);
-        return bytes;
-      }
+    } catch (e) {
+      debugPrint('Cache read failed, falling back to network: $e');
     }
 
     // 2. Network
     try {
       final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
         final bytes = res.bodyBytes;
         _putMemory(url, bytes);
         if (kIsWeb) {
@@ -138,6 +147,7 @@ class CacheService {
         }
         return bytes;
       }
+      debugPrint('Image fetch failed: ${res.statusCode} for $url');
     } catch (e) {
       debugPrint('Error loading image: $e');
     }
@@ -149,7 +159,6 @@ final cachedImageProvider = FutureProvider.family<Uint8List?, String>((
   ref,
   url,
 ) async {
-  // Keep decoded image in provider cache instead of disposing immediately.
   ref.keepAlive();
   return CacheService().getImage(url);
 });
@@ -172,6 +181,12 @@ class CachedNetworkImageWidget extends ConsumerWidget {
     this.fit = BoxFit.cover,
   });
 
+  // Only pass a cache dimension when it's a sane, positive integer.
+  int? _cacheDim(double? v) {
+    if (v == null || !v.isFinite || v <= 0) return null;
+    return v.round();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (imageUrl.isEmpty) {
@@ -185,7 +200,7 @@ class CachedNetworkImageWidget extends ConsumerWidget {
           placeholder ?? const Center(child: CircularProgressIndicator()),
       error: (_, _) => errorWidget ?? const Icon(Icons.broken_image),
       data: (bytes) {
-        if (bytes == null) {
+        if (bytes == null || bytes.isEmpty) {
           return errorWidget ?? const Icon(Icons.broken_image);
         }
         return Image.memory(
@@ -194,9 +209,10 @@ class CachedNetworkImageWidget extends ConsumerWidget {
           height: height,
           width: width,
           gaplessPlayback: true,
-          // Cache decoded bitmap at display resolution -> less memory, faster paint.
-          cacheHeight: height?.isFinite == true ? height!.round() : null,
-          cacheWidth: width?.isFinite == true ? width!.round() : null,
+          cacheHeight: _cacheDim(height),
+          cacheWidth: _cacheDim(width),
+          errorBuilder: (_, _, _) =>
+              errorWidget ?? const Icon(Icons.broken_image),
         );
       },
     );
