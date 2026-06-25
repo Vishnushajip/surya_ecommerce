@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,8 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:idb_shim/idb_browser.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CacheService {
   static final CacheService _instance = CacheService._internal();
@@ -182,7 +183,7 @@ class CachedNetworkImageWidget extends ConsumerWidget {
     return asyncImage.when(
       loading: () =>
           placeholder ?? const Center(child: CircularProgressIndicator()),
-      error: (_, __) => errorWidget ?? const Icon(Icons.broken_image),
+      error: (_, _) => errorWidget ?? const Icon(Icons.broken_image),
       data: (bytes) {
         if (bytes == null) {
           return errorWidget ?? const Icon(Icons.broken_image);
