@@ -52,11 +52,16 @@ class CartView extends ConsumerWidget {
           return Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: cartSummary.items.length,
-                  itemBuilder: (context, index) =>
-                      _buildCartItem(context, ref, cartSummary.items[index]),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: cartSummary.items.length,
+                      itemBuilder: (context, index) =>
+                          _buildCartItem(context, ref, cartSummary.items[index]),
+                    ),
+                  ),
                 ),
               ),
               _buildCheckoutSection(context, cartSummary),
@@ -253,9 +258,12 @@ class CartView extends ConsumerWidget {
         border: Border.all(color: AppColors.borderSoft),
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -304,7 +312,9 @@ class CartView extends ConsumerWidget {
             ),
           ],
         ),
+       ),
       ),
+     ),
     );
   }
 
