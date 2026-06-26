@@ -66,6 +66,8 @@ class SunAssociatesFooter extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 10),
+                _AdminLink(),
               ],
             ),
           ),
@@ -183,7 +185,6 @@ class _BrandColumn extends StatelessWidget {
   }
 }
 
-// ─── Navigation Column ───────────────────────────────────────────────────────
 
 class _NavigationColumn extends StatelessWidget {
   final List<({String label, String route})> _links = const [
@@ -259,7 +260,6 @@ class _MissionColumn extends StatelessWidget {
   }
 }
 
-// ─── Shared Sub-Widgets ──────────────────────────────────────────────────────
 
 class _SectionHeading extends StatelessWidget {
   final String text;
@@ -354,6 +354,38 @@ class _SocialIconButton extends StatefulWidget {
 
   @override
   State<_SocialIconButton> createState() => _SocialIconButtonState();
+}
+
+class _AdminLink extends StatefulWidget {
+  @override
+  State<_AdminLink> createState() => _AdminLinkState();
+}
+
+class _AdminLinkState extends State<_AdminLink> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: () => launchUrl(Uri.parse('https://sunassociates-e01eb.web.app/')),
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 200),
+          style: GoogleFonts.outfit(
+            color: _hovered
+                ? AppColors.accentGold
+                : AppColors.textSecondary.withValues(alpha: 0.4),
+            fontSize: 10,
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.w400,
+          ),
+          child: const Text('ADMIN'),
+        ),
+      ),
+    );
+  }
 }
 
 class _SocialIconButtonState extends State<_SocialIconButton> {
